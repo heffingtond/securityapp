@@ -12,7 +12,6 @@ import javax.sql.DataSource;
 
 import beans.OrganizationBean;
 import beans.SecurityProfileBean;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -138,6 +137,7 @@ public class SecurityUtilities
 	
 	public static Connection getJndiConnection( String datasourceName ) throws Exception
 	{
+		System.out.println( "datasourceName is " + datasourceName );
 		Context initContext = new InitialContext();
 	    DataSource ds = ( DataSource ) initContext.lookup( "java:jboss/datasources/" + datasourceName);
 	    Connection connection = ds.getConnection();
