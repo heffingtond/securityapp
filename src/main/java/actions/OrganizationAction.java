@@ -73,17 +73,22 @@ public class OrganizationAction extends Action
 			// Get and set active organization.
 			OrganizationBean activeOrganization = SecurityUtilities.getOrganization( organizationId, user.getAllOrganizations() );
 			user.setActiveOrganization( activeOrganization );
-			System.out.println( "Deleting organizationId " + organizationId );
+			destinationPage = "/JSP/organizationEdit.jsp";
+		}
+		else
+		if ( "confirmDelete".equals( buttonPressed ) )
+		{
 			Connection connection = null;
 			try
 			{
 				connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
 				if ( connection != null )
 				{
-					SecurityUtilities.deleteOrganization( organizationId, connection );
+					SecurityUtilities.deleteOrganization( user.getActiveOrganization().getOrganizationId(), connection );
 					user.getAllOrganizations().clear();
 					ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
 					user.getAllOrganizations().addAll( allOrganizations );
+					user.setActiveOrganization( new OrganizationBean() );
 					connection.close();
 				}
 			}
@@ -91,8 +96,15 @@ public class OrganizationAction extends Action
 			{
 				e.printStackTrace();
 			}
-
+			destinationPage = "/JSP/organization.jsp";
 		}
+		else
+		if ( "cancelEditDelete".equals( buttonPressed ) )
+		{
+			user.setActiveOrganization( new OrganizationBean() );
+			destinationPage = "/JSP/organization.jsp";
+		}
+	
 		this.view( request, response, destinationPage );
 	}
 }

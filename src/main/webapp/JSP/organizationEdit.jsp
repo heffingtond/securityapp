@@ -31,48 +31,81 @@
 			<table class="center">
 				<tr>
 					<th>
-						Organization Name
+		    			<label for="organizationName">Organization Name</label>
 					</th>
 					<td>
-	    				<input type="text" value="Hoser" id="organizationName" name="organizationName" size="80" maxlength="128"><br>
+		    			<input type="text" id="organizationName" name="organizationName" value="${sessionScope.UserBean.activeOrganization.organizationName}" size="80" maxlength="128"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationAddress">Organization Address</label>
+					</th>
+					<td>
+		    			<input type="text" id="organizationAddress" name="organizationAddress" value="${sessionScope.UserBean.activeOrganization.organizationAddress}" size="80" maxlength="128"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationCity">Organization City</label>
+					</th>
+					<td>
+		    			<input type="text" id="organizationCity" name="organizationCity" value="${sessionScope.UserBean.activeOrganization.organizationCity}" size="80" maxlength="128"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationState">Choose a state</label>
+					</th>
+					<td>
+						<select name="organizationState" id="organizationState">
+							<c:forEach var="state" items="${sessionScope.STATE_LIST}">
+								<c:if test="${sessionScope.UserBean.activeOrganization.organizationState == state.value}">
+									<option selected value="${state.value}">${state.key}</option>
+								</c:if>
+								<c:if test="${sessionScope.UserBean.activeOrganization.organizationState != state.value}">
+									<option value="${state.value}">${state.key}</option>
+								</c:if>
+							</c:forEach>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationZip">Organization Zip</label>
+					</th>
+					<td>
+					    <input type="text" id="organizationZip" name="organizationZip" value="${sessionScope.UserBean.activeOrganization.organizationZip}" size="5" maxlength="5">
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationZipExt">Organization Zip Extension</label>
+					</th>
+					<td>
+		    			<input type="text" id="organizationZipExt" name="organizationZipExt" value="${sessionScope.UserBean.activeOrganization.organizationZipExt}" size="4" maxlength="4"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="primaryUrl">Primary URL</label>
+					</th>
+					<td>
+					    <input type="text" id="primaryUrl" name="primaryUrl" value="${sessionScope.UserBean.activeOrganization.primaryUrl}" size="80" maxlength="128"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
+		    			<label for="organizationDescription">Organization Description</label>
+					</th>
+					<td>
+					    <textarea id="organizationDescription" name="organizationDescription" rows="5" cols="60" maxlength="1024" placeholder="Description of the organization">${sessionScope.UserBean.activeOrganization.organizationDescription}</textarea><br>
 					</td>
 				</tr>
 			</table>
-
-			<p>
-			<label for="organizationName">Organization Name:</label>
-		    <input type="text" id="organizationName" name="organizationName" size="80" maxlength="128" required><br>
-		    </p>
-			<p>
-			<label for="organizationAddress">Organization Address:</label>
-		    <input type="text" id="organizationAddress" name="organizationAddress" size="80" maxlength="128" required><br>
-		    </p>
-			<p>
-			<label for="organizationCity">Organization City:</label>
-		    <input type="text" id="organizationCity" name="organizationCity" size="80" maxlength="128" required><br>
-		    </p>
-			<p>
-		    <label for="organizationState">Choose a state:</label>
-			<select name="organizationState" id="organizationState">
-				<c:forEach var="state" items="${sessionScope.STATE_LIST}">
-					<option value="${state.value}">${state.key}</option>
-				</c:forEach>
-			</select>
-		    <label for="organizationZip">Zip:</label>
-		    <input type="text" id="organizationZip" name="organizationZip" size="5" maxlength="5" required>
-		    <label for="organizationZip">Zip Ext:</label>
-		    <input type="text" id="organizationZipExt" name="organizationZipExt" size="4" maxlength="4"><br>
-		    </p>
-			<p>
-			<label for="primaryUrl">Primary URL:</label>
-		    <input type="text" id="primaryUrl" name="primaryUrl" size="80" maxlength="128" required><br>
-		    </p>
-			<p>
-			<label for="organizationDescription">Organization Description:</label>
-		    <textarea id="organizationDescription" name="organizationDescription" rows="5" cols="60" maxlength="1024" placeholder="Description of the organization"></textarea><br>
-		    </p>
 		    <p>
-		    <button type="submit" value="addOrganization" name="OrganizationAction">Add Organization</button>
+		    <button type="submit" value="confirmDelete" name="OrganizationAction">Confirm Delete</button>
+		    <button type="submit" value="cancelEditDelete" name="OrganizationAction">Cancel</button>
 		    </p>
 	    </div>
 		</form>
