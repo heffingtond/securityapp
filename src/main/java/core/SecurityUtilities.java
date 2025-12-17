@@ -89,22 +89,42 @@ public class SecurityUtilities
 	{
 		ArrayList<String> errors = new ArrayList<String>();
 		// If the organizationId is zero, we are adding a new organization
-		if ( organization.getOrganizationId() == 0 )
+		if ( SecurityUtilities.isEmpty( organization.getOrganizationName() ) )
+			errors.add( "The organization name is required." );
+		if ( SecurityUtilities.isEmpty( organization.getOrganizationAddress() ) )
+			errors.add( "The organization address is required." );
+		if ( SecurityUtilities.isEmpty( organization.getOrganizationCity() ) )
+			errors.add( "The organization city is required." );
+		if ( SecurityUtilities.isEmpty( organization.getOrganizationState() ) )
+			errors.add( "The organization state is required." );
+		if ( SecurityUtilities.isEmpty( organization.getOrganizationZip() ) )
+			errors.add( "The organization zip code is required." );
+		if ( SecurityUtilities.isEmpty( organization.getPrimaryUrl() ) )
+			errors.add( "The primary URL is required." );
+		
+		if ( errors.size() == 0 )
 		{
-			if ( SecurityUtilities.isEmpty( organization.getOrganizationName() ) )
-				errors.add( "The organization name is required." );
-			if ( SecurityUtilities.isEmpty( organization.getOrganizationAddress() ) )
-				errors.add( "The organization address is required." );
-			if ( SecurityUtilities.isEmpty( organization.getOrganizationCity() ) )
-				errors.add( "The organization city is required." );
-			if ( SecurityUtilities.isEmpty( organization.getOrganizationState() ) )
-				errors.add( "The organization state is required." );
-			if ( SecurityUtilities.isEmpty( organization.getOrganizationZip() ) )
-				errors.add( "The organization zip code is required." );
-			if ( SecurityUtilities.isEmpty( organization.getPrimaryUrl() ) )
-				errors.add( "The primary URL is required." );
+			// If this is a save from from the edit function, we need to see if the name is being changed.
+			// If the name is being changed, need to make sure the name change is not a duplicate.
+			boolean needDuplicateTest = true;
+			if ( organization.getOrganizationId() > 0 ) // If this is from the edit function
+			{
+				OrganizationBean original = null;
+				String originalOrganizationName = null;
+				try
+				{
+					original = getOrganization( organization.getOrganizationId(), connection );
+					originalOrganizationName = original.getOrganizationName();
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+				if ( organization.getOrganizationName().equalsIgnoreCase( originalOrganizationName ) )
+					needDuplicateTest = false;
+			}
 			
-			if ( errors.size() == 0 )
+			if ( needDuplicateTest )
 			{
 				// Organization name cannot be a duplicate
 				try
@@ -210,6 +230,37 @@ public class SecurityUtilities
 		return organization;
 	}
 	
+	
+	public static OrganizationBean getOrganization( int organizationId, Connection connection ) throws SQLException
+	{
+		String sql = "select * from APPLICATION_SECURITY.ORGANIZATION "
+				   + "where organization_id = ?";
+		System.out.println( "sql is " + sql );
+		PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        preparedStatement = connection.prepareStatement( sql );
+        preparedStatement.setInt( 1, organizationId );
+        resultSet = preparedStatement.executeQuery();
+        OrganizationBean organization = null;
+        if ( resultSet.next() )
+        {
+        	organization = new OrganizationBean();
+        	organization.setOrganizationId( resultSet.getInt("organization_id") );
+        	organization.setOrganizationName( resultSet.getString("organization_name") );
+        	organization.setOrganizationAddress( resultSet.getString("organization_address") );
+        	organization.setOrganizationCity( resultSet.getString("organization_city") );
+        	organization.setOrganizationState( resultSet.getString("organization_state") );
+        	organization.setOrganizationZip( resultSet.getString("organization_zip") );
+        	organization.setOrganizationZipExt( resultSet.getString("organization_zip_ext") );
+        	organization.setPrimaryUrl( resultSet.getString("primary_url") );
+        	organization.setOrganizationDescription( resultSet.getString("organization_description") );
+        }
+        resultSet.close();
+        preparedStatement.close();
+		
+		return organization;
+	}
+	
 	public static OrganizationBean getOrganization( int organizationId, ArrayList<OrganizationBean> allOrganizations )
 	{
         OrganizationBean organization = null;
@@ -266,7 +317,36 @@ public class SecurityUtilities
         preparedStatement.close();
 	}
 
-
+	public static void updateOrganization( OrganizationBean organization, Connection connection ) throws SQLException
+	{
+		String sql = "update APPLICATION_SECURITY.ORGANIZATION set "
+				   + " organization_name=?, "
+				   + " organization_address=?,"
+				   + " organization_city=?,"
+				   + " organization_state=?,"
+				   + " organization_zip=?,"
+				   + " organization_zip_ext=?,"
+				   + " primary_url=?,"
+				   + " organization_description=? "
+				   + " where organization_id = ?";
+		System.out.println( "sql is " + sql );
+		PreparedStatement preparedStatement = connection.prepareStatement( sql );
+		System.out.println( "saving name " + organization.getOrganizationName() );
+        preparedStatement.setString( 1, organization.getOrganizationName() );
+        preparedStatement.setString( 2, organization.getOrganizationAddress() );
+        preparedStatement.setString( 3, organization.getOrganizationCity() );
+        preparedStatement.setString( 4, organization.getOrganizationState() );
+        preparedStatement.setString( 5, organization.getOrganizationZip() );
+        preparedStatement.setString( 6, organization.getOrganizationZipExt() );
+        preparedStatement.setString( 7, organization.getPrimaryUrl() );
+        preparedStatement.setString( 8, organization.getOrganizationDescription() );
+        preparedStatement.setInt( 9, organization.getOrganizationId() );
+		System.out.println( "saving organizationId " + organization.getOrganizationId() );
+        preparedStatement.executeUpdate();
+        
+        preparedStatement.close();
+	}
+	
 	public static void deleteOrganization( int organizationId, Connection connection ) throws SQLException
 	{
 		String sql = "delete from APPLICATION_SECURITY.ORGANIZATION "

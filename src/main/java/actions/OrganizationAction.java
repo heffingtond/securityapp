@@ -73,7 +73,9 @@ public class OrganizationAction extends Action
 			// Get and set active organization.
 			OrganizationBean activeOrganization = SecurityUtilities.getOrganization( organizationId, user.getAllOrganizations() );
 			user.setActiveOrganization( activeOrganization );
+			user.setFunction( "deleteOrganization" );
 			destinationPage = "/JSP/organizationEdit.jsp";
+			
 		}
 		else
 		if ( "confirmDelete".equals( buttonPressed ) )
@@ -101,8 +103,85 @@ public class OrganizationAction extends Action
 		else
 		if ( "cancelEditDelete".equals( buttonPressed ) )
 		{
+			Connection connection = null;
+			try
+			{
+				connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
+				if ( connection != null )
+				{
+					user.getAllOrganizations().clear();
+					ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
+					user.getAllOrganizations().addAll( allOrganizations );
+					user.setActiveOrganization( new OrganizationBean() );
+					connection.close();
+				}
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
 			user.setActiveOrganization( new OrganizationBean() );
 			destinationPage = "/JSP/organization.jsp";
+		}
+		else
+		if ( buttonPressed.contains( "edit_" ) )
+		{
+			// Parse the organizationId
+			String organizationIdStr = buttonPressed.substring( buttonPressed.indexOf( '_' ) + 1 );
+			int organizationId = Integer.parseInt( organizationIdStr );
+			// Get and set active organization.
+			OrganizationBean activeOrganization = SecurityUtilities.getOrganization( organizationId, user.getAllOrganizations() );
+			user.setActiveOrganization( activeOrganization );
+			user.setFunction( "editOrganization" );
+			destinationPage = "/JSP/organizationEdit.jsp";
+		}
+		else
+		if ( "saveEdit".equals( buttonPressed ) )
+		{
+			destinationPage = "/JSP/organization.jsp";
+			System.out.println( "Save the modified organization here." );
+			String organizationName = request.getParameter( "organizationName" );
+			user.getActiveOrganization().setOrganizationName( organizationName );
+			String organizationAddress = request.getParameter( "organizationAddress" );
+			user.getActiveOrganization().setOrganizationAddress( organizationAddress );
+			String organizationCity = request.getParameter( "organizationCity" );
+			user.getActiveOrganization().setOrganizationCity( organizationCity );
+			String organizationState = request.getParameter( "organizationState" );
+			user.getActiveOrganization().setOrganizationState( organizationState );
+			String organizationZip = request.getParameter( "organizationZip" );
+			user.getActiveOrganization().setOrganizationZip( organizationZip );
+			String organizationZipExt = request.getParameter( "organizationZipExt" );
+			user.getActiveOrganization().setOrganizationZipExt( organizationZipExt );
+			String primaryUrl = request.getParameter( "primaryUrl" );
+			user.getActiveOrganization().setPrimaryUrl( primaryUrl );
+			String organizationDescription = request.getParameter( "organizationDescription" );
+			user.getActiveOrganization().setOrganizationDescription( organizationDescription );
+			Connection connection = null;
+			try
+			{
+				connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
+				if ( connection != null )
+				{
+					user.getErrors().addAll( SecurityUtilities.validateOrganization( user.getActiveOrganization(), connection ) );
+					if ( user.getErrors().size() == 0 )
+					{
+						SecurityUtilities.updateOrganization( user.getActiveOrganization(), connection );
+						user.getAllOrganizations().clear();
+						ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
+						user.getAllOrganizations().addAll( allOrganizations );
+						user.setActiveOrganization( new OrganizationBean() );
+						destinationPage = "/JSP/organization.jsp";
+					}
+					else
+						destinationPage = "/JSP/organizationEdit.jsp";
+						
+					connection.close();
+				}
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
 		}
 	
 		this.view( request, response, destinationPage );

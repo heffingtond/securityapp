@@ -104,7 +104,12 @@
 				</tr>
 			</table>
 		    <p>
-		    <button type="submit" value="confirmDelete" name="OrganizationAction">Confirm Delete</button>
+		    <c:if test="${sessionScope.UserBean.function == 'deleteOrganization'}">
+		    	<button type="submit" value="confirmDelete" name="OrganizationAction">Confirm Delete</button>
+		    </c:if>	
+		    <c:if test="${sessionScope.UserBean.function == 'editOrganization'}">
+		    	<button type="submit" value="saveEdit" name="OrganizationAction">Save</button>
+		    </c:if>	
 		    <button type="submit" value="cancelEditDelete" name="OrganizationAction">Cancel</button>
 		    </p>
 	    </div>
