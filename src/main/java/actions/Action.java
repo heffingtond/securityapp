@@ -1,3 +1,6 @@
+/**
+ * Abstract action class
+ */
 package actions;
 
 import jakarta.servlet.RequestDispatcher;
