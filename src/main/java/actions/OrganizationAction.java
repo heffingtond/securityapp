@@ -54,6 +54,7 @@ public class OrganizationAction extends Action
 						user.getAllOrganizations().clear();
 						ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
 						user.getAllOrganizations().addAll( allOrganizations );
+						user.setActiveOrganization( new OrganizationBean() );
 					}
 					connection.close();
 				}
