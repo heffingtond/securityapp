@@ -50,7 +50,7 @@ public class OrganizationAction extends Action
 					user.getErrors().addAll( SecurityUtilities.validateOrganization( organization, connection ) );
 					if ( user.getErrors().size() == 0 )
 					{
-						SecurityUtilities.addNewOrganization( organization, connection );
+						SecurityUtilities.addNewOrganization( user, connection );
 						user.getAllOrganizations().clear();
 						ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
 						user.getAllOrganizations().addAll( allOrganizations );

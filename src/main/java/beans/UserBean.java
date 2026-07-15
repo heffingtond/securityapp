@@ -7,7 +7,9 @@ public class UserBean
 	private String userName;
 	private ArrayList<String> errors = new ArrayList<String>();
 	private ArrayList<OrganizationBean> allOrganizations = new ArrayList<OrganizationBean>();
+	private ArrayList<AuthenticationProfileBean> allAuthenticationProfiles = new ArrayList<AuthenticationProfileBean>();
 	private OrganizationBean activeOrganization = new OrganizationBean();
+	private AuthenticationProfileBean activeAuthenticationProfile = new AuthenticationProfileBean();
 	private String function;
 	
 	public String getUserName()
@@ -45,6 +47,16 @@ public class UserBean
 	{
 		this.allOrganizations = allOrganizations;
 	}
+	
+	public ArrayList<AuthenticationProfileBean> getAllAuthenticationProfiles()
+	{
+		return allAuthenticationProfiles;
+	}
+
+	public void setAllAuthenticationProfiles(ArrayList<AuthenticationProfileBean> allAuthenticationProfiles)
+	{
+		this.allAuthenticationProfiles = allAuthenticationProfiles;
+	}
 
 	public OrganizationBean getActiveOrganization()
 	{
@@ -54,6 +66,16 @@ public class UserBean
 	public void setActiveOrganization(OrganizationBean activeOrganization)
 	{
 		this.activeOrganization = activeOrganization;
+	}
+	
+	public AuthenticationProfileBean getActiveAuthenticationProfile()
+	{
+		return activeAuthenticationProfile;
+	}
+
+	public void setActiveAuthenticationProfile(AuthenticationProfileBean activeAuthenticationProfile)
+	{
+		this.activeAuthenticationProfile = activeAuthenticationProfile;
 	}
 
 	public String getFunction()

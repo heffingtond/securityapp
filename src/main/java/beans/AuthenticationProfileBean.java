@@ -1,9 +1,11 @@
 package beans;
 
-public class SecurityProfileBean
+public class AuthenticationProfileBean
 {
 	private int authenticationProfileId;
+	private int organizationId;
 	private String userId;
+	private String textPassword;
 	private String password;
 	private String salt;
 	private String firstName;
@@ -15,6 +17,7 @@ public class SecurityProfileBean
 	private int failedLoginAttempts;
 	private String verificationCodeMethod;
 
+	
 	public int getAuthenticationProfileId()
 	{
 		return authenticationProfileId;
@@ -25,6 +28,16 @@ public class SecurityProfileBean
 		this.authenticationProfileId = authenticationProfileId;
 	}
 	
+	public int getOrganizationId()
+	{
+		return organizationId;
+	}
+
+	public void setOrganizationId(int organizationId)
+	{
+		this.organizationId = organizationId;
+	}
+
 	public String getUserId()
 	{
 		return userId;
@@ -35,6 +48,16 @@ public class SecurityProfileBean
 		this.userId = userId;
 	}
 	
+	public String getTextPassword()
+	{
+		return textPassword;
+	}
+
+	public void setTextPassword(String textPassword)
+	{
+		this.textPassword = textPassword;
+	}
+
 	public String getPassword()
 	{
 		return password;

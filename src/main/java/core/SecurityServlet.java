@@ -4,6 +4,7 @@ package core;
 import java.io.IOException;
 
 import actions.Action;
+import actions.AuthenticationProfileAction;
 import actions.LoginAction;
 import actions.LogoutAction;
 import actions.OrganizationAction;
@@ -47,6 +48,9 @@ public class SecurityServlet extends HttpServlet
 			else
 			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "OrganizationAction" ) ) != null )
 				action = new OrganizationAction();
+			else
+			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "AuthenticationProfileAction" ) ) != null )
+				action = new AuthenticationProfileAction();
 			
 			if ( action != null )
 				action.execute( request, response );

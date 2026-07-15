@@ -3,6 +3,7 @@ package actions;
 import java.sql.Connection;
 import java.util.ArrayList;
 
+import beans.AuthenticationProfileBean;
 import beans.OrganizationBean;
 import beans.UserBean;
 import core.Constants;
@@ -51,9 +52,13 @@ public class LoginAction extends Action
 				if ( user.getErrors().size() == 0 )
 				{
 					request.getSession().setAttribute( "STATE_LIST", Constants.STATE_LIST );
+					request.getSession().setAttribute( "VERIFICATION_METHODS", Constants.VERIFICATION_METHODS );
 					user.getAllOrganizations().clear();
 					ArrayList<OrganizationBean> allOrganizations = SecurityUtilities.getAllOrganizations( connection );
 					user.getAllOrganizations().addAll( allOrganizations );
+					user.getAllAuthenticationProfiles().clear();
+					ArrayList<AuthenticationProfileBean> allAuthenticationProfiles = SecurityUtilities.getAllAuthenticationProfiles( connection );
+					user.getAllAuthenticationProfiles().addAll( allAuthenticationProfiles );
 					destinationPage = "/JSP/organization.jsp";
 				}
 				connection.close();

@@ -1,5 +1,6 @@
 package core;
 
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class Constants
@@ -78,5 +79,19 @@ public class Constants
 		STATE_LIST.put("Wisconsin","WI");
 		STATE_LIST.put("Wyoming","WY");
 		STATE_LIST.put("Yukon Territory","YT");	
+	}
+	
+//	public final static TreeMap<String,String> VERIFICATION_METHODS = new TreeMap<String,String>();
+//	static
+//	{
+//		VERIFICATION_METHODS.put("TEXT","TEXT");
+//		VERIFICATION_METHODS.put("EMAIL","EMAIL");
+//	}
+	
+	public final static ArrayList<String> VERIFICATION_METHODS = new ArrayList<String>(); 
+	static
+	{
+		VERIFICATION_METHODS.add("TEXT");
+		VERIFICATION_METHODS.add("EMAIL");
 	}
 }

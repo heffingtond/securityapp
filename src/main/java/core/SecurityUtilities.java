@@ -1,17 +1,22 @@
 package core;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
 import beans.OrganizationBean;
-import beans.SecurityProfileBean;
+import beans.UserBean;
+import beans.AuthenticationProfileBean;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -73,18 +78,107 @@ public class SecurityUtilities
 		return null;
 	}
 	
+	private static boolean containsNumber( String str ) 
+	{
+		boolean containsNumber = false;
+	    if ( ! SecurityUtilities.isEmpty( str ) )
+		    for ( char c : str.toCharArray() ) 
+		    {
+		        if ( Character.isDigit( c ) ) 
+		            containsNumber = true;
+		    }
+	    return containsNumber;
+	}
+	
 	public static ArrayList<String> validateLogin( String username, String password )
 	{
+		
 		ArrayList<String> errors = new ArrayList<String>();
-		// Must validate username is unique
 		if ( username.length() < 7 || username.length() > 100 )
 			errors.add( "User Name must be between 7 and 100 characters in length." );
 		if ( password.length() < 8 || password.length() > 50 )
 			errors.add( "Password must be between 8 and 50 characters in length." );
-		// if (  )
 		return errors;
 	}
-	
+
+	public static ArrayList<String> validateAuthenticationProfile( AuthenticationProfileBean authentication, UserBean user, Connection connection )
+	{
+		ArrayList<String> errors = new ArrayList<String>();
+		
+		if ( authentication.getOrganizationId() == 0 )
+			errors.add( "Please select the organization this user belongs to." );
+
+		if ( SecurityUtilities.isEmpty( authentication.getFirstName() ) )
+			errors.add( "The First Name name is required." );
+		if ( SecurityUtilities.isEmpty( authentication.getLastName() ) )
+			errors.add( "The Last Name name is required." );
+
+		if ( SecurityUtilities.isEmpty( authentication.getMobilePhone() ) )
+			errors.add( "Mobile Phone is required." );
+		else
+		if ( authentication.getMobilePhone().length() < 10 || authentication.getMobilePhone().length() > 12 )
+			errors.add( "Mobile Phone must be 10 to 12 characters in length." );
+		
+		if ( SecurityUtilities.isEmpty( authentication.getTextPassword() ) )
+			errors.add( "Password required." );
+		else
+			if ( ! containsNumber( authentication.getTextPassword() ) )
+				errors.add( "password must contain at least one number." );
+		if ( authentication.getTextPassword().length() < 8 || authentication.getTextPassword().length() > 50 )
+			errors.add( "Password must be 8 to 50 characters in length." );
+		if ( authentication.getTextPassword().contains( " " ) )
+			errors.add( "Password cannot contain whitespace." );
+		
+		if ( SecurityUtilities.isEmpty( authentication.getUserId() ) )
+			errors.add( "User ID is required." );
+		else
+		if ( authentication.getUserId().length() < 8 || authentication.getUserId().length() > 50 )
+			errors.add( "User ID must be 8 to 50 characters in length." );
+		
+		if ( SecurityUtilities.isEmpty( authentication.getVerificationCodeMethod() ) || "SELECT".equals( authentication.getVerificationCodeMethod() ) )
+			errors.add( "Please select a method for verification code delivery." );
+		
+		if ( errors.size() == 0 )
+		{
+			// If this is a save from from the edit function, we need to see if the user id is being changed.
+			// If the user id is being changed, need to make sure the user id change is not a duplicate.
+			boolean needDuplicateTest = true;
+			if ( authentication.getAuthenticationProfileId() > 0 ) // If this is from the edit function
+			{
+				AuthenticationProfileBean original = null;
+				String originalUserId = null;
+				try
+				{
+					original = SecurityUtilities.getAuthenticationProfile( authentication.getAuthenticationProfileId(), connection );
+					originalUserId = original.getUserId();
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+				if ( authentication.getUserId().equalsIgnoreCase( originalUserId ) )
+					needDuplicateTest = false;
+			}
+			
+			if ( needDuplicateTest )
+			{
+				// User ID cannot be a duplicate within an organization
+				try
+				{
+					if ( SecurityUtilities.getAuthenticationProfile( authentication.getUserId(), authentication.getOrganizationId(), connection ) != null )
+						errors.add( "The user " + authentication.getUserId() + " already exists.  Duplicates not allowed." );
+				}
+				catch( Exception e )
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return errors;
+		
+	}
+
 	public static ArrayList<String> validateOrganization( OrganizationBean organization, Connection connection )
 	{
 		ArrayList<String> errors = new ArrayList<String>();
@@ -163,42 +257,117 @@ public class SecurityUtilities
 	    Connection connection = ds.getConnection();
 	    return connection;
 	}
-
 	
-	public static String getSecurityProfile( SecurityProfileBean profile )
+	public static AuthenticationProfileBean getAuthenticationProfile( int authenticationProfileId, ArrayList<AuthenticationProfileBean> allAuthenticationProfiles )
 	{
-		String status = null;
-		System.out.println( "TOP OF getSecurityProfile()" );
-		Connection connection = null;
+        AuthenticationProfileBean authentication = null;
+        
+        int i = 0;
+        boolean found = false;
+        while ( i < allAuthenticationProfiles.size() && ! found )
+        {
+        	authentication = allAuthenticationProfiles.get( i );
+        	if ( authentication.getAuthenticationProfileId() == authenticationProfileId )
+        		found = true;
+        	else
+        		i++;
+        }
+        
+        if ( found )
+        	return authentication;
+        else
+        	return null;
+	}
+	
+	public static AuthenticationProfileBean getAuthenticationProfile( String userId, int organizationId, Connection connection )
+	{
+		AuthenticationProfileBean authenticationProfile = null;
 		try
 		{
-			connection = getJndiConnection( "SECURITY_MYSQL_DB" );
-			if ( connection != null )
-			{
-				String sql = "select * from AUTHENTICATION_PROFILE";
-				System.out.println( "sql is " + sql );
-				PreparedStatement preparedStatement = null;
-		        ResultSet resultSet = null;
-		        preparedStatement = connection.prepareStatement( sql );
-		        resultSet = preparedStatement.executeQuery();
-		        if ( resultSet.next() )
-		        {
-		        	String userId = resultSet.getString("userId");
-		        	System.out.println( "USER ID: " + userId );
-		        }
-		        resultSet.close();
-		        preparedStatement.close();
-		        connection.close();
-			}
+			String sql = 
+			"select * from AUTHENTICATION_PROFILE "
+		  + "where user_id = ? "
+		  + "and organization_id = ?";
+			System.out.println( "sql is " + sql );
+			PreparedStatement preparedStatement = null;
+	        ResultSet resultSet = null;
+	        preparedStatement = connection.prepareStatement( sql );
+	        preparedStatement.setString( 1, userId );
+	        preparedStatement.setInt( 2, organizationId );
+	        resultSet = preparedStatement.executeQuery();
+	        
+	        if ( resultSet.next() )
+	        {
+	        	authenticationProfile = new AuthenticationProfileBean();
+	        	authenticationProfile.setAuthenticationProfileId( resultSet.getInt("authentication_profile_id") );
+	        	authenticationProfile.setOrganizationId( organizationId );
+	        	authenticationProfile.setUserId( userId );
+	        	authenticationProfile.setPassword( resultSet.getString("password") );
+	        	authenticationProfile.setSalt( resultSet.getString("salt") );
+	        	authenticationProfile.setFirstName( resultSet.getString("first_name") );
+	        	authenticationProfile.setLastName( resultSet.getString("last_name") );
+	        	authenticationProfile.setMobilePhone( resultSet.getString("mobile_phone") );
+	        	authenticationProfile.setOfficePhone( resultSet.getString("office_phone") );
+	        	authenticationProfile.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
+	        	authenticationProfile.setHomePhone( resultSet.getString("home_phone") );
+	        	authenticationProfile.setFailedLoginAttempts( resultSet.getInt("failed_login_attempts") );
+	        	authenticationProfile.setVerificationCodeMethod( resultSet.getString("verification_code_method") );
+	        }
+	        resultSet.close();
+	        preparedStatement.close();
+	        connection.close();
 		}
 		catch( Exception e )
 		{
 			e.printStackTrace();
 		}
 		
-		return status;
+		return authenticationProfile;
 	}
 	
+	public static AuthenticationProfileBean getAuthenticationProfile( int authenticationProfileId, Connection connection )
+	{
+		AuthenticationProfileBean authenticationProfile = null;
+		try
+		{
+			String sql = 
+			"select * from AUTHENTICATION_PROFILE "
+		  + "where authentication_profile_id = ? ";
+			System.out.println( "sql is " + sql );
+			PreparedStatement preparedStatement = null;
+	        ResultSet resultSet = null;
+	        preparedStatement = connection.prepareStatement( sql );
+	        preparedStatement.setInt( 1, authenticationProfileId );
+	        resultSet = preparedStatement.executeQuery();
+	        
+	        if ( resultSet.next() )
+	        {
+	        	authenticationProfile = new AuthenticationProfileBean();
+	        	authenticationProfile.setAuthenticationProfileId( resultSet.getInt("authentication_profile_id") );
+	        	authenticationProfile.setOrganizationId( resultSet.getInt("organization_id") );
+	        	authenticationProfile.setUserId( resultSet.getString("user_id") );
+	        	authenticationProfile.setPassword( resultSet.getString("password") );
+	        	authenticationProfile.setSalt( resultSet.getString("salt") );
+	        	authenticationProfile.setFirstName( resultSet.getString("first_name") );
+	        	authenticationProfile.setLastName( resultSet.getString("last_name") );
+	        	authenticationProfile.setMobilePhone( resultSet.getString("mobile_phone") );
+	        	authenticationProfile.setOfficePhone( resultSet.getString("office_phone") );
+	        	authenticationProfile.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
+	        	authenticationProfile.setHomePhone( resultSet.getString("home_phone") );
+	        	authenticationProfile.setFailedLoginAttempts( resultSet.getInt("failed_login_attempts") );
+	        	authenticationProfile.setVerificationCodeMethod( resultSet.getString("verification_code_method") );
+	        }
+	        resultSet.close();
+	        preparedStatement.close();
+	        connection.close();
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace();
+		}
+		
+		return authenticationProfile;
+	}
 	
 	public static OrganizationBean getOrganization( String organizationName, Connection connection ) throws SQLException
 	{
@@ -282,7 +451,7 @@ public class SecurityUtilities
         	return null;
 	}
 
-	public static void addNewOrganization( OrganizationBean organization, Connection connection ) throws SQLException
+	public static void addNewOrganization( UserBean user, Connection connection ) throws SQLException
 	{
 		String sql = "insert into APPLICATION_SECURITY.ORGANIZATION "
 				   + "(organization_name, "
@@ -296,14 +465,14 @@ public class SecurityUtilities
 				   + "values( ?,?,?,?,?,?,?,? )";
 		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-        preparedStatement.setString( 1, organization.getOrganizationName() );
-        preparedStatement.setString( 2, organization.getOrganizationAddress() );
-        preparedStatement.setString( 3, organization.getOrganizationCity() );
-        preparedStatement.setString( 4, organization.getOrganizationState() );
-        preparedStatement.setString( 5, organization.getOrganizationZip() );
-        preparedStatement.setString( 6, organization.getOrganizationZipExt() );
-        preparedStatement.setString( 7, organization.getPrimaryUrl() );
-        preparedStatement.setString( 8, organization.getOrganizationDescription() );
+        preparedStatement.setString( 1, user.getActiveOrganization().getOrganizationName() );
+        preparedStatement.setString( 2, user.getActiveOrganization().getOrganizationAddress() );
+        preparedStatement.setString( 3, user.getActiveOrganization().getOrganizationCity() );
+        preparedStatement.setString( 4, user.getActiveOrganization().getOrganizationState() );
+        preparedStatement.setString( 5, user.getActiveOrganization().getOrganizationZip() );
+        preparedStatement.setString( 6, user.getActiveOrganization().getOrganizationZipExt() );
+        preparedStatement.setString( 7, user.getActiveOrganization().getPrimaryUrl() );
+        preparedStatement.setString( 8, user.getActiveOrganization().getOrganizationDescription() );
         preparedStatement.executeUpdate();
         
         ResultSet rs = preparedStatement.getGeneratedKeys();
@@ -311,7 +480,7 @@ public class SecurityUtilities
         {
 	        int newPrimaryKey = rs.getInt( 1 );
 	        System.out.println( "New primary key: " + newPrimaryKey );
-	    	organization.setOrganizationId( newPrimaryKey );
+	        user.getActiveOrganization().setOrganizationId( newPrimaryKey );
         }
         rs.close();
         preparedStatement.close();
@@ -357,7 +526,6 @@ public class SecurityUtilities
         preparedStatement.executeUpdate();
         preparedStatement.close();
 	}
-	
 
 	public static ArrayList<OrganizationBean> getAllOrganizations( Connection connection ) throws SQLException
 	{
@@ -387,4 +555,121 @@ public class SecurityUtilities
 		preparedStatement.close();
 		return allOrganizations;
 	}
+
+	public static ArrayList<AuthenticationProfileBean> getAllAuthenticationProfiles( Connection connection ) throws SQLException
+	{
+		ArrayList<AuthenticationProfileBean> allAuthenticationProfiles = new ArrayList<AuthenticationProfileBean>();
+		String sql = "select * from APPLICATION_SECURITY.AUTHENTICATION_PROFILE ";
+		System.out.println( "sql is " + sql );
+		PreparedStatement preparedStatement = null;
+		ResultSet resultSet = null;
+		preparedStatement = connection.prepareStatement( sql );
+		resultSet = preparedStatement.executeQuery();
+		AuthenticationProfileBean authentication = null;
+		while ( resultSet.next() )
+		{
+			authentication = new AuthenticationProfileBean();
+			authentication.setAuthenticationProfileId( resultSet.getInt("authentication_profile_id") );
+			authentication.setOrganizationId( resultSet.getInt("organization_id") );
+			authentication.setUserId( resultSet.getString("user_id") );
+			authentication.setPassword( resultSet.getString("password") );
+			authentication.setSalt( resultSet.getString("salt") );
+			authentication.setFirstName( resultSet.getString("first_name") );
+			authentication.setLastName( resultSet.getString("last_name") );
+			authentication.setMobilePhone( resultSet.getString("mobile_phone") );
+			authentication.setOfficePhone( resultSet.getString("office_phone") );
+			authentication.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
+			authentication.setHomePhone( resultSet.getString("home_phone") );
+			authentication.setFailedLoginAttempts( resultSet.getInt("failed_login_attempts") );
+			authentication.setVerificationCodeMethod( resultSet.getString("verification_code_method") );
+			allAuthenticationProfiles.add( authentication );
+		}
+		resultSet.close();
+		preparedStatement.close();
+		return allAuthenticationProfiles;
+	}
+	
+	public static void deleteAuthenticationProfile( int authenticationProfileId, Connection connection ) throws SQLException
+	{
+		String sql = "delete from APPLICATION_SECURITY.AUTHENTICATION_PROFILE "
+				   + "where authentication_profile_id = ?";
+		PreparedStatement preparedStatement = connection.prepareStatement( sql );
+        preparedStatement.setInt( 1, authenticationProfileId );
+        preparedStatement.executeUpdate();
+        preparedStatement.close();
+	}
+
+	public static void addNewAuthenticationProfile( UserBean user, Connection connection ) throws SQLException
+	{
+		String sql = "insert into APPLICATION_SECURITY.AUTHENTICATION_PROFILE "
+				   + "("
+				   + "organization_id, "
+				   + "user_id,"
+				   + "password,"
+				   + "salt,"
+				   + "first_name,"
+				   + "last_name,"
+				   + "mobile_phone,"
+				   + "office_phone,"
+				   + "office_phone_ext,"
+				   + "home_phone,"
+				   + "failed_login_attempts,"
+				   + "verification_code_method"
+				   + ") "
+				   + "values( ?,?,?,?,?,?,?,?,?,?,?,? )";
+		System.out.println( "sql is " + sql );
+		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
+		System.out.println( "OrganizationId is " + user.getActiveAuthenticationProfile().getOrganizationId() );
+        preparedStatement.setInt( 1, user.getActiveAuthenticationProfile().getOrganizationId() );
+        preparedStatement.setString( 2, user.getActiveAuthenticationProfile().getUserId() );
+        preparedStatement.setString( 3, user.getActiveAuthenticationProfile().getPassword() );
+        preparedStatement.setString( 4, user.getActiveAuthenticationProfile().getSalt() );
+        preparedStatement.setString( 5, user.getActiveAuthenticationProfile().getFirstName() );
+        preparedStatement.setString( 6, user.getActiveAuthenticationProfile().getLastName() );
+        preparedStatement.setString( 7, user.getActiveAuthenticationProfile().getMobilePhone() );
+        preparedStatement.setString( 8, user.getActiveAuthenticationProfile().getOfficePhone() );
+        preparedStatement.setString( 9, user.getActiveAuthenticationProfile().getOfficePhoneExt() );
+        preparedStatement.setString( 10, user.getActiveAuthenticationProfile().getHomePhone() );
+        preparedStatement.setInt( 11, user.getActiveAuthenticationProfile().getFailedLoginAttempts() );
+        preparedStatement.setString( 12, user.getActiveAuthenticationProfile().getVerificationCodeMethod() );
+        preparedStatement.executeUpdate();
+        
+        ResultSet rs = preparedStatement.getGeneratedKeys();
+        if ( rs.next() )
+        {
+	        int newPrimaryKey = rs.getInt( 1 );
+	        System.out.println( "New primary key: " + newPrimaryKey );
+	        user.getActiveAuthenticationProfile().setAuthenticationProfileId( newPrimaryKey );
+        }
+        rs.close();
+        preparedStatement.close();
+	}
+
+	public static void createSecurePasswordAndSalt( AuthenticationProfileBean authentication, String plainTextPassword ) throws Exception
+	{
+        // 1. Generate a random salt
+        byte[] saltBytes = new byte[16];
+        new SecureRandom().nextBytes( saltBytes );
+        String salt = Base64.getEncoder().encodeToString( saltBytes );
+
+        // 2. Hash the password with the salt
+        String hashedPassword = hashPassword( plainTextPassword, saltBytes );
+
+        System.out.println( "Hashed password: " + hashedPassword );
+        System.out.println( "Salt: " + salt );
+        // 3. Save both to profile bean
+        authentication.setPassword( hashedPassword );
+        authentication.setSalt( salt );
+	}
+	
+	private static String hashPassword(String password, byte[] salt) throws Exception
+	{
+		final int ITERATIONS = 10000;
+	    final int KEY_LENGTH = 256;
+	    final String ALGORITHM = "PBKDF2WithHmacSHA256";
+	    PBEKeySpec spec = new PBEKeySpec( password.toCharArray(), salt, ITERATIONS, KEY_LENGTH );
+        SecretKeyFactory skf = SecretKeyFactory.getInstance( ALGORITHM );
+        byte[] hash = skf.generateSecret( spec ).getEncoded();
+        return Base64.getEncoder().encodeToString( hash );
+    }
 }

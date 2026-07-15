@@ -21,6 +21,7 @@
 		<form name="form1" action="/securityapp/SecurityServlet" method="POST">
 		<ul>
 		  <li><a href="#here">Organization</a></li>
+		  <li><a href="?AuthenticationProfileAction=yes">Authentication Profile</a></li>
 		  <li><a href="?LogoutAction=yes">Logout</a></li>
 		</ul>
        	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
