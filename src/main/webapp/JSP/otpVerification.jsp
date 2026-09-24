@@ -15,7 +15,7 @@
 @import "/securityapp/css/header.css";
 </style>
 
-<title>Security Login</title>
+<title>One Time Pass Code Verification</title>
 </head>
 <body>
 
@@ -34,11 +34,16 @@
 			       	</c:if>
 			    </div>   	
 		        <form action="/securityapp/SecurityServlet" method="post">
-		            <label for="username">Username:</label>
-		            <input type="text" id="username" name="username" required><br><br>
-		            <label for="password">Password:</label>
-		            <input type="password" id="password" name="password" required><br><br>
-		            <input type="submit" value="Login" name="LoginAction">
+		            <label for="passcode">Enter You Pass Code Here:</label>
+		            <input type="text" id="passcode" name="passcode" size="8" maxlength="6"><br><br>
+		            <input type="submit" value="Validate" name="LoginAction">
+		            <p>
+		            If no code received within 5 minutes, request a new code here. 
+		            <input type="submit" value="Request New Code" name="LoginAction">
+		            </p>
+		            <p>
+		            ${requestScope.userMessage}
+		            </p>
 		        </form>
 		    </div>
 	    </div>

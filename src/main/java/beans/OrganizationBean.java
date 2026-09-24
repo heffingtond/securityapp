@@ -29,6 +29,8 @@ public class OrganizationBean
 	
 	public void setOrganizationName(String organizationName)
 	{
+		if ( organizationName != null )
+			organizationName = organizationName.trim();
 		this.organizationName = organizationName;
 	}
 	

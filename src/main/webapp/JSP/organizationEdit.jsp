@@ -10,19 +10,23 @@
 
 <style type="text/css" media="all">
 @import "/securityapp/css/pageFormat.css";
+@import "/securityapp/css/header.css";
 </style>
 
 <meta charset="UTF-8">
 <title>Edit an organization</title>
 </head>
 <body>
+	<%@ include file="header.jsp" %>
 	<div id="content">
-       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
-   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
-       			<c:out value="${error}"/><br/><br/>
-   			</c:forEach>
-   			${sessionScope.UserBean.clearErrors}
-       	</c:if>
+		<div id="errors">
+	       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
+	   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
+	       			<c:out value="${error}"/><br/><br/>
+	   			</c:forEach>
+	   			${sessionScope.UserBean.clearErrors}
+	       	</c:if>
+	    </div>   	
 	
 		<form name="form1" action="/securityapp/SecurityServlet" method="POST">
 		<h2 align="center">Organization</h2>

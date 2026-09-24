@@ -4,10 +4,14 @@ package core;
 import java.io.IOException;
 
 import actions.Action;
+import actions.ApplicationAction;
 import actions.AuthenticationProfileAction;
+import actions.DepartmentAction;
 import actions.LoginAction;
 import actions.LogoutAction;
 import actions.OrganizationAction;
+import actions.RoleAction;
+import actions.RoleAssignmentAction;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -51,6 +55,18 @@ public class SecurityServlet extends HttpServlet
 			else
 			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "AuthenticationProfileAction" ) ) != null )
 				action = new AuthenticationProfileAction();
+			else
+			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "DepartmentAction" ) ) != null )
+				action = new DepartmentAction();
+			else
+			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "ApplicationAction" ) ) != null )
+				action = new ApplicationAction();
+			else
+			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "RoleAction" ) ) != null )
+				action = new RoleAction();
+			else
+			if ( SecurityUtilities.replaceSpecialCharacters( request.getParameter( "RoleAssignmentAction" ) ) != null )
+				action = new RoleAssignmentAction();
 			
 			if ( action != null )
 				action.execute( request, response );

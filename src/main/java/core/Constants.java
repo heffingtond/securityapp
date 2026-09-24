@@ -5,6 +5,8 @@ import java.util.TreeMap;
 
 public class Constants
 {
+	public final static String APPLICATION_CODE = "SECURITY_APP";
+	
 	public final static TreeMap<String,String> STATE_LIST = new TreeMap<String,String>();
 	static
 	{

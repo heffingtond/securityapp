@@ -4,25 +4,30 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://securityapp.com" prefix="myfn" %>
 
 <html>
 <head>
 
 <style type="text/css" media="all">
 @import "/securityapp/css/pageFormat.css";
+@import "/securityapp/css/header.css";
 </style>
 
 <meta charset="UTF-8">
 <title>Edit an Authentication Profile</title>
 </head>
 <body>
+	<%@ include file="header.jsp" %>
 	<div id="content">
-       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
-   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
-       			<c:out value="${error}"/><br/><br/>
-   			</c:forEach>
-   			${sessionScope.UserBean.clearErrors}
-       	</c:if>
+		<div id="errors">
+	       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
+	   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
+	       			<c:out value="${error}"/><br/><br/>
+	   			</c:forEach>
+	   			${sessionScope.UserBean.clearErrors}
+	       	</c:if>
+	    </div>   	
 	
 		<form name="form1" action="/securityapp/SecurityServlet" method="POST">
 		<h2 align="center">Authentication Profile</h2>
@@ -31,20 +36,10 @@
 			<table class="center">
 				<tr>
 					<th>
-					    <label for="organizationId">Select the organization:</label>
+					    Organization:
 					</th>
 					<td>
-						<select name="organizationId" id="organizationId">
-							<option value="SELECT">SELECT</option>
-							<c:forEach var="organization" items="${sessionScope.UserBean.allOrganizations}">
-								<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId == organization.organizationId}">
-									<option selected value="${organization.organizationId}">${organization.organizationName}</option>
-								</c:if>
-								<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId != organization.organizationId}">
-									<option value="${organization.organizationId}">${organization.organizationName}</option>
-								</c:if>
-							</c:forEach>
-						</select>
+						${myfn:getOrganization( sessionScope.UserBean.activeAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName}
 					</td>
 				</tr>
 				<tr>
@@ -57,10 +52,10 @@
 				</tr>
 				<tr>
 					<th>
-						<label for="password">Password:</label>
+						<label for="textPassword">Password:</label>
 					</th>
 					<td>
-		    			<input type="text" id="password" name="password" value="${sessionScope.UserBean.activeAuthenticationProfile.password}" size="30" maxlength="128"><br>
+		    			<input type="text" id="textPassword" name="textPassword" value="${sessionScope.UserBean.activeAuthenticationProfile.textPassword}" size="30" maxlength="128"><br>
 					</td>
 				</tr>
 				<tr>

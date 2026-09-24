@@ -4,6 +4,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://securityapp.com" prefix="myfn" %>
 
 <html>
 <head>
@@ -11,27 +12,36 @@
 <style type="text/css" media="all">
 @import "/securityapp/css/navbar.css";
 @import "/securityapp/css/pageFormat.css";
+@import "/securityapp/css/header.css";
 </style>
 
 <meta charset="UTF-8">
 <title>Maintain Organizations</title>
 </head>
 <body>
+	<%@ include file="header.jsp" %>
 	<div id="content">
 		<form name="form1" action="/securityapp/SecurityServlet" method="POST">
 		<ul>
-		  <li><a href="#here">Organization</a></li>
-		  <li><a href="?AuthenticationProfileAction=yes">Authentication Profile</a></li>
-		  <li><a href="?LogoutAction=yes">Logout</a></li>
+	  		<li><a href="#here">Organization</a></li>
+	  		<li><a href="?AuthenticationProfileAction=yes">Authentication Profile</a></li>
+	  		<li><a href="?DepartmentAction=yes">Department</a></li>
+		  	<li><a href="?ApplicationAction=yes">Application</a></li>
+	  		<li><a href="?RoleAction=yes">Role</a></li>
+	  		<li><a href="?RoleAssignmentAction=yes">Role Assignment</a></li>
+		  	<li><a href="?LogoutAction=yes">Logout</a></li>
 		</ul>
-       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
-   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
-       			<c:out value="${error}"/><br/><br/>
-   			</c:forEach>
-   			${sessionScope.UserBean.clearErrors}
-       	</c:if>
+		<div id="errors">
+	       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
+	   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
+	       			<c:out value="${error}"/><br/><br/>
+	   			</c:forEach>
+	   			${sessionScope.UserBean.clearErrors}
+	       	</c:if>
+	    </div>   	
 		<h2 align="center">Organization</h2>
 		<div id="inputField">
+		<c:if test="${sessionScope.UserBean.restrictedOrganizationId == 0}">
 			<p>
 			<label for="organizationName">Organization Name:</label>
 		    <input type="text" id="organizationName" name="organizationName" value="${sessionScope.UserBean.activeOrganization.organizationName}" size="80" maxlength="128"><br>
@@ -72,6 +82,7 @@
 		    <p>
 		    <button type="submit" value="addOrganization" name="OrganizationAction">Add Organization</button>
 		    </p>
+		</c:if>
 	    </div>
 		</form>
 		<form name="form2" action="/securityapp/SecurityServlet" method="POST">
@@ -84,17 +95,30 @@
 							Organization Name
 						</th>
 					</tr>
-					<c:forEach var="organization" items="${sessionScope.UserBean.allOrganizations}">
+					<c:if test="${sessionScope.UserBean.restrictedOrganizationId == 0}">
+						<c:forEach var="organization" items="${sessionScope.UserBean.allOrganizations}">
+							<tr>
+								<td style="width:10%">
+									<button type="submit" value="delete_${organization.organizationId}" name="OrganizationAction">del</button>
+									<button type="submit" value="edit_${organization.organizationId}" name="OrganizationAction">Edit</button>
+								</td>
+								<td style="width:80%">
+									${organization.organizationName}
+								</td>
+							</tr>
+						</c:forEach>
+					</c:if>	
+					<c:if test="${sessionScope.UserBean.restrictedOrganizationId > 0}">
 						<tr>
 							<td style="width:10%">
-								<button type="submit" value="delete_${organization.organizationId}" name="OrganizationAction">del</button>
-								<button type="submit" value="edit_${organization.organizationId}" name="OrganizationAction">Edit</button>
+								<button type="submit" value="delete_${sessionScope.UserBean.loginAuthenticationProfile.organizationId}" name="OrganizationAction">del</button>
+								<button type="submit" value="edit_${sessionScope.UserBean.loginAuthenticationProfile.organizationId}" name="OrganizationAction">Edit</button>
 							</td>
 							<td style="width:80%">
-								${organization.organizationName}
+								${myfn:getOrganization( sessionScope.UserBean.loginAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName}
 							</td>
 						</tr>
-					</c:forEach>
+					</c:if>
 				</table>
 			</c:if>	
 		</form>

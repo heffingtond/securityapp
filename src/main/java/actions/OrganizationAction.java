@@ -97,6 +97,8 @@ public class OrganizationAction extends Action
 			}
 			catch( Exception e )
 			{
+				user.getErrors().add( "Database integrity violation.  Child rows are referencing this row." );
+				user.setActiveOrganization( new OrganizationBean() );
 				e.printStackTrace();
 			}
 			destinationPage = "/JSP/organization.jsp";

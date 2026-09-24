@@ -4,6 +4,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://securityapp.com" prefix="myfn" %>
 
 <html>
 <head>
@@ -11,48 +12,74 @@
 <style type="text/css" media="all">
 @import "/securityapp/css/navbar.css";
 @import "/securityapp/css/pageFormat.css";
+@import "/securityapp/css/header.css";
 </style>
 
 <meta charset="UTF-8">
 <title>Maintain Authentication Profiles</title>
 </head>
 <body>
+	<%@ include file="header.jsp" %>
 	<div id="content">
 		<form name="form1" action="/securityapp/SecurityServlet" method="POST">
 		<ul>
-		  <li><a href="?OrganizationAction=yes">Organization</a></li>
-		  <li><a href="#here">Authentication Profile</a></li>
-		  <li><a href="?LogoutAction=yes">Logout</a></li>
+	  		<li><a href="?OrganizationAction=yes">Organization</a></li>
+		  	<li><a href="#here">Authentication Profile</a></li>
+	  		<li><a href="?DepartmentAction=yes">Department</a></li>
+		  	<li><a href="?ApplicationAction=yes">Application</a></li>
+	  		<li><a href="?RoleAction=yes">Role</a></li>
+	  		<li><a href="?RoleAssignmentAction=yes">Role Assignment</a></li>
+		  	<li><a href="?LogoutAction=yes">Logout</a></li>
 		</ul>
-       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
-   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
-       			<c:out value="${error}"/><br/><br/>
-   			</c:forEach>
-   			${sessionScope.UserBean.clearErrors}
-       	</c:if>
+		<div id="errors">
+	       	<c:if test="${fn:length(sessionScope.UserBean.errors) > 0}">
+	   			<c:forEach var="error" items="${sessionScope.UserBean.errors}">
+	       			<c:out value="${error}"/><br/><br/>
+	   			</c:forEach>
+	   			${sessionScope.UserBean.clearErrors}
+	       	</c:if>
+	    </div>   	
 		<h2 align="center">Authentication Profile</h2>
 		<div id="inputField">
-			<p>
-		    <label for="organizationId">Select the organization:</label>
-			<select name="organizationId" id="organizationId">
-				<option value="SELECT">SELECT</option>
-				<c:forEach var="organization" items="${sessionScope.UserBean.allOrganizations}">
-					<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId == organization.organizationId}">
-						<option selected value="${organization.organizationId}">${organization.organizationName}</option>
+			<c:if test="${myfn:getOrganization( sessionScope.UserBean.loginAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName == 'Watchtower'}">
+				<p>
+					<strong>
+					<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId == 0}">
+						Please select an organization to continue
 					</c:if>
-					<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId != organization.organizationId}">
-						<option value="${organization.organizationId}">${organization.organizationName}</option>
+					<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId != 0}">
+						Selected Organization: ${myfn:getOrganization( sessionScope.UserBean.activeAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName}
 					</c:if>
-				</c:forEach>
-			</select>
-		    </p>
+					</strong>
+			    </p>
+			    <p>
+			    <label for="organizationId">Select the organization:</label>
+				<select name="organizationId" id="organizationId">
+					<option value="SELECT">SELECT</option>
+					<c:forEach var="organization" items="${sessionScope.UserBean.allOrganizations}">
+						<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId == organization.organizationId}">
+							<option selected value="${organization.organizationId}">${organization.organizationName}</option>
+						</c:if>
+						<c:if test="${sessionScope.UserBean.activeAuthenticationProfile.organizationId != organization.organizationId}">
+							<option value="${organization.organizationId}">${organization.organizationName}</option>
+						</c:if>
+					</c:forEach>
+				</select>
+				<button type="submit" value="selectOrganization" name="AuthenticationProfileAction">Select Organization</button>
+				</p>
+			</c:if>
+			<c:if test="${myfn:getOrganization( sessionScope.UserBean.loginAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName != 'Watchtower'}">
+				<p>
+				Organization: ${myfn:getOrganization( sessionScope.UserBean.loginAuthenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName}
+		    	</p>
+			</c:if>
 		    <p>
 			<label for="userId">User ID:</label>
 		    <input type="text" id="userId" name="userId" value="${sessionScope.UserBean.activeAuthenticationProfile.userId}" size="30" maxlength="128"><br>
 		    </p>
 		    <p>
-			<label for="password">Password:</label>
-		    <input type="text" id="password" name="password" value="${sessionScope.UserBean.activeAuthenticationProfile.password}" size="30" maxlength="128"><br>
+			<label for="textPassword">Password:</label>
+		    <input type="text" id="textPassword" name="textPassword" value="${sessionScope.UserBean.activeAuthenticationProfile.textPassword}" size="30" maxlength="128"><br>
 		    </p>
 		    <p>
 			<label for="firstName">First Name:</label>
@@ -107,8 +134,11 @@
 					<tr>
 						<th style="width:10%">
 						</th>
-						<th style="width:80%">
+						<th style="width:20%">
 							User ID
+						</th>
+						<th style="width:70%">
+							Organization
 						</th>
 					</tr>
 					<c:forEach var="authenticationProfile" items="${sessionScope.UserBean.allAuthenticationProfiles}">
@@ -117,13 +147,16 @@
 								<button type="submit" value="delete_${authenticationProfile.authenticationProfileId}" name="AuthenticationProfileAction">del</button>
 								<button type="submit" value="edit_${authenticationProfile.authenticationProfileId}" name="AuthenticationProfileAction">Edit</button>
 							</td>
-							<td style="width:80%">
+							<td style="width:20%">
 								${authenticationProfile.userId}
+							</td>
+							<td style="width:70%">
+								${myfn:getOrganization( authenticationProfile.organizationId, sessionScope.UserBean.allOrganizations ).organizationName}
 							</td>
 						</tr>
 					</c:forEach>
 				</table>
-			</c:if>	
+			</c:if>		
 		</form>
 		
     </div>

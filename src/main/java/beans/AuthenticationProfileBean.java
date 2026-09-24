@@ -1,5 +1,8 @@
 package beans;
 
+import java.util.ArrayList;
+import java.util.TreeMap;
+
 public class AuthenticationProfileBean
 {
 	private int authenticationProfileId;
@@ -16,6 +19,8 @@ public class AuthenticationProfileBean
 	private String homePhone;
 	private int failedLoginAttempts;
 	private String verificationCodeMethod;
+	private String clientResult;
+	private TreeMap< String, ArrayList<String>> rolesForDepartment = new TreeMap< String, ArrayList<String>>();
 
 	
 	public int getAuthenticationProfileId()
@@ -45,6 +50,8 @@ public class AuthenticationProfileBean
 	
 	public void setUserId(String userId)
 	{
+		if ( userId != null )
+			userId = userId.trim();
 		this.userId = userId;
 	}
 	
@@ -55,6 +62,8 @@ public class AuthenticationProfileBean
 
 	public void setTextPassword(String textPassword)
 	{
+		if ( textPassword != null )
+			textPassword = textPassword.trim();
 		this.textPassword = textPassword;
 	}
 
@@ -156,5 +165,25 @@ public class AuthenticationProfileBean
 	public void setVerificationCodeMethod(String verificationCodeMethod)
 	{
 		this.verificationCodeMethod = verificationCodeMethod;
+	}
+
+	public String getClientResult()
+	{
+		return clientResult;
+	}
+
+	public void setClientResult(String clientResult)
+	{
+		this.clientResult = clientResult;
+	}
+
+	public TreeMap<String, ArrayList<String>> getRolesForDepartment()
+	{
+		return rolesForDepartment;
+	}
+
+	public void setRolesForDepartment(TreeMap<String, ArrayList<String>> rolesForDepartment)
+	{
+		this.rolesForDepartment = rolesForDepartment;
 	}
 }

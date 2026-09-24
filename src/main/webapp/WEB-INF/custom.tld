@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<taglib xmlns="http://sun.com"
+        xmlns:xsi="http://w3.org"
+        xsi:schemaLocation="http://sun.com 
+        http://sun.com/web-jsptaglibrary_2_1.xsd"
+        version="2.1">
+
+    <display-name>Custom Functions</display-name>
+    <tlib-version>1.0</tlib-version>
+    <short-name>custom</short-name>
+    <uri>http://securityapp.com</uri>
+    
+    <function>
+        <!-- The name you will use in your JSP EL expressions -->
+        <name>getOrganization</name>
+        <!-- The fully qualified Java class path -->
+        <function-class>core.SecurityUtilities</function-class>
+        <!-- The exact method signature matching the Java class -->
+        <function-signature>beans.OrganizationBean getOrganization( int, java.util.ArrayList)</function-signature>
+    </function>
+    <function>
+        <!-- The name you will use in your JSP EL expressions -->
+        <name>getAuthenticationProfile</name>
+        <!-- The fully qualified Java class path -->
+        <function-class>core.SecurityUtilities</function-class>
+        <!-- The exact method signature matching the Java class -->
+        <function-signature>beans.AuthenticationProfileBean getAuthenticationProfile( int, java.util.ArrayList)</function-signature>
+    </function>
+    <function>
+        <!-- The name you will use in your JSP EL expressions -->
+        <name>getApplication</name>
+        <!-- The fully qualified Java class path -->
+        <function-class>core.SecurityUtilities</function-class>
+        <!-- The exact method signature matching the Java class -->
+        <function-signature>beans.ApplicationBean getApplication( int, java.util.ArrayList)</function-signature>
+    </function>
+    <function>
+        <!-- The name you will use in your JSP EL expressions -->
+        <name>getDepartment</name>
+        <!-- The fully qualified Java class path -->
+        <function-class>core.SecurityUtilities</function-class>
+        <!-- The exact method signature matching the Java class -->
+        <function-signature>beans.DepartmentBean getDepartment( int, java.util.ArrayList)</function-signature>
+    </function>
+    <function>
+        <!-- The name you will use in your JSP EL expressions -->
+        <name>getRole</name>
+        <!-- The fully qualified Java class path -->
+        <function-class>core.SecurityUtilities</function-class>
+        <!-- The exact method signature matching the Java class -->
+        <function-signature>beans.RoleBean getRole( int, java.util.ArrayList)</function-signature>
+    </function>
+</taglib>

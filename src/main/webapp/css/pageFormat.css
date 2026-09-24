@@ -2,22 +2,51 @@
 
 #content 
 {
-    width: 80%; /* Or any fixed width like 960px */
+	width: 80%; /* Or any fixed width like 960px */
     margin: 0 auto; /* This is the key for horizontal centering */
     display: block; /* Ensures the div behaves as a block-level element */
     /* Optional: Add padding, background-color, etc. for visual styling */
+    color: black;
+    background-color: #e6effc;
     padding: 20px;
-    background-color: rgb(237, 242, 243);
 }
 
 #inputField 
 {
-  padding-left: 40px;
+  padding-left: 60px;
+  padding-top: 20px;
+}
+
+#errors 
+{
+	display: flex;
+    justify-content: center; /* Centers horizontally */
+	font-size: 15px;
+	color: red;
+	font-weight: bold;
+    margin: 0 auto; /* This is the key for horizontal centering */
+  	padding-top: 20px;
 }
 
 body 
 {
+  margin-top: 10px;		
   font-family: arial;
+}
+
+h1
+{
+	font-size: 20px;
+}
+
+h2
+{
+	font-size: 20px;
+}
+
+p
+{
+  padding-top: 20px;
 }
 
 table, th, td {
@@ -27,3 +56,4 @@ table.center {
   margin-left: auto;
   margin-right: auto;
 }
+
