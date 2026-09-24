@@ -1,1 +1,1 @@
-This is a security platform that can be leveraged by any application.  This platform facilitates authentication, authorizations, and 2FA.  This application offer full autonomy to an organization's security team to maintain application user security.
+This is a security platform that can be leveraged by any application.  This platform facilitates authentication, authorizations, and 2FA.  This application offers full autonomy to an organization's security team to maintain application user security.
