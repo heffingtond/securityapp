@@ -20,7 +20,6 @@ public class UserBean
 	private AuthenticationProfileBean loginAuthenticationProfile = new AuthenticationProfileBean();
 	private ApplicationBean activeApplication = new ApplicationBean();
 	private RoleBean activeRole = new RoleBean();
-	private VerificationCodeBean activeVerificationCode = new VerificationCodeBean();
 	private String function;
 	private int restrictedOrganizationId = 0;
 	
@@ -190,16 +189,6 @@ public class UserBean
 	public void setActiveRole(RoleBean activeRole)
 	{
 		this.activeRole = activeRole;
-	}
-
-	public VerificationCodeBean getActiveVerificationCode()
-	{
-		return activeVerificationCode;
-	}
-
-	public void setActiveVerificationCode(VerificationCodeBean activeVerificationCode)
-	{
-		this.activeVerificationCode = activeVerificationCode;
 	}
 
 	public String getFunction()

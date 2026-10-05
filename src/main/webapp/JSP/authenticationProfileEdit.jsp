@@ -76,6 +76,14 @@
 				</tr>
 				<tr>
 					<th>
+						<label for="email">Email:</label>
+					</th>
+					<td>
+		    			<input type="text" id="email" name="email" value="${sessionScope.UserBean.activeAuthenticationProfile.email}" size="50" maxlength="128"><br>
+					</td>
+				</tr>
+				<tr>
+					<th>
 						<label for="mobilePhone">Mobile Phone:</label>
 					</th>
 					<td>

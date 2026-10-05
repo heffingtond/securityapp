@@ -90,6 +90,10 @@
 		    <input type="text" id="lastName" name="lastName" value="${sessionScope.UserBean.activeAuthenticationProfile.lastName}" size="50" maxlength="128"><br>
 		    </p>
 		    <p>
+			<label for="email">Email:</label>
+		    <input type="text" id="email" name="email" value="${sessionScope.UserBean.activeAuthenticationProfile.email}" size="50" maxlength="128"><br>
+		    </p>
+		    <p>
 			<label for="mobilePhone">Mobile Phone:</label>
 		    <input type="text" id="mobilePhone" name="mobilePhone" value="${sessionScope.UserBean.activeAuthenticationProfile.mobilePhone}" size="12" maxlength="12"><br>
 		    </p>

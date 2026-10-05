@@ -16,6 +16,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Map;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -30,7 +31,6 @@ import org.json.simple.parser.JSONParser;
 import beans.OrganizationBean;
 import beans.RoleBean;
 import beans.UserBean;
-import beans.VerificationCodeBean;
 import beans.ApplicationBean;
 import beans.ApplicationUserDepartmentRoleBean;
 import beans.AuthenticationProfileBean;
@@ -38,6 +38,11 @@ import beans.DepartmentBean;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.AddressException;
+
+
 
 public class SecurityUtilities
 {
@@ -118,6 +123,25 @@ public class SecurityUtilities
 			errors.add( "Password must be between 8 and 50 characters in length." );
 		return errors;
 	}
+	
+    public static boolean isValidEmail(String email) 
+    {
+        if (email == null || email.trim().isEmpty()) 
+        {
+            return false;
+        }
+        try 
+        {
+            InternetAddress emailAddr = new InternetAddress(email);
+            emailAddr.validate(); // Throws AddressException if structure is invalid
+            return true;
+        } 
+        catch (AddressException ex) 
+        {
+        	ex.printStackTrace();
+            return false;
+        }
+    }
 
 	public static void validateAuthenticationProfile( UserBean user, Connection connection )
 	{
@@ -128,6 +152,9 @@ public class SecurityUtilities
 			user.getErrors().add( "The First Name name is required." );
 		if ( SecurityUtilities.isEmpty( user.getActiveAuthenticationProfile().getLastName() ) )
 			user.getErrors().add( "The Last Name name is required." );
+
+		if ( ! SecurityUtilities.isValidEmail( user.getActiveAuthenticationProfile().getEmail() ) )
+			user.getErrors().add( "Invalid email address.  Valid email is required." );
 
 		if ( SecurityUtilities.isEmpty( user.getActiveAuthenticationProfile().getMobilePhone() ) )
 			user.getErrors().add( "Mobile Phone is required." );
@@ -144,8 +171,8 @@ public class SecurityUtilities
 			if ( SecurityUtilities.isEmpty( user.getActiveAuthenticationProfile().getTextPassword() ) )
 				user.getErrors().add( "Password required." );
 			else
-				if ( ! containsNumber( user.getActiveAuthenticationProfile().getTextPassword() ) )
-					user.getErrors().add( "password must contain at least one number." );
+			if ( ! containsNumber( user.getActiveAuthenticationProfile().getTextPassword() ) )
+				user.getErrors().add( "password must contain at least one number." );
 			if ( user.getActiveAuthenticationProfile().getTextPassword().length() < 8 || user.getActiveAuthenticationProfile().getTextPassword().length() > 50 )
 				user.getErrors().add( "Password must be 8 to 50 characters in length." );
 			if ( user.getActiveAuthenticationProfile().getTextPassword().contains( " " ) )
@@ -440,38 +467,6 @@ public class SecurityUtilities
 		return exists;
 	}
 
-	// This method gets an existing Verification Code for the natural PK: authentication_profile_id + application id
-	public static VerificationCodeBean getVerificationCode( int authenticationProfileId,
-			   												int applicationId,
-			   												Connection connection ) throws Exception
-	{
-		String sql = 
-		"select * from APPLICATION_SECURITY.VERIFICATION_CODE "
-	  + "where authentication_profile_id = ? "
-	  + "and   application_id = ? ";
-		PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-        preparedStatement = connection.prepareStatement( sql );
-        preparedStatement.setInt( 1, authenticationProfileId );
-        preparedStatement.setInt( 2, applicationId );
-        resultSet = preparedStatement.executeQuery();
-        
-        VerificationCodeBean verificationCode = null;
-        if ( resultSet.next() )
-        {
-        	verificationCode = new VerificationCodeBean();
-        	verificationCode.setVerificationCodeId( resultSet.getInt("verification_code_id") );
-        	verificationCode.setAuthenticationProfileId( resultSet.getInt("authentication_profile_id") );
-			verificationCode.setApplicationId( resultSet.getInt("application_id") );
-			verificationCode.setVerificationCode( resultSet.getString("verification_cd") );
-			verificationCode.setCreatedTimestamp( resultSet.getString("created_ts") );
-        }
-        resultSet.close();
-        preparedStatement.close();
-        
-        return verificationCode;
-	}
-
 	public static ArrayList<ApplicationUserDepartmentRoleBean> getAssignedRolesForUser( int authenticationProfileId, Connection connection )
 	{
 		ArrayList<ApplicationUserDepartmentRoleBean> rolesForUser = new ArrayList<ApplicationUserDepartmentRoleBean>();
@@ -746,6 +741,7 @@ public class SecurityUtilities
 	        	authenticationProfile.setSalt( resultSet.getString("salt") );
 	        	authenticationProfile.setFirstName( resultSet.getString("first_name") );
 	        	authenticationProfile.setLastName( resultSet.getString("last_name") );
+	        	authenticationProfile.setEmail( resultSet.getString("email") );
 	        	authenticationProfile.setMobilePhone( resultSet.getString("mobile_phone") );
 	        	authenticationProfile.setOfficePhone( resultSet.getString("office_phone") );
 	        	authenticationProfile.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
@@ -861,6 +857,7 @@ public class SecurityUtilities
 	        	authenticationProfile.setSalt( resultSet.getString("salt") );
 	        	authenticationProfile.setFirstName( resultSet.getString("first_name") );
 	        	authenticationProfile.setLastName( resultSet.getString("last_name") );
+	        	authenticationProfile.setEmail( resultSet.getString("email") );
 	        	authenticationProfile.setMobilePhone( resultSet.getString("mobile_phone") );
 	        	authenticationProfile.setOfficePhone( resultSet.getString("office_phone") );
 	        	authenticationProfile.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
@@ -1118,6 +1115,7 @@ public class SecurityUtilities
 				   + " salt=?,"
 				   + " first_name=?,"
 				   + " last_name=?,"
+				   + " email=?,"
 				   + " mobile_phone=?, "
 				   + " office_phone=?, "
 				   + " office_phone_ext=?, "
@@ -1133,13 +1131,14 @@ public class SecurityUtilities
         preparedStatement.setString( 5, authentication.getSalt() );
         preparedStatement.setString( 6, authentication.getFirstName() );
         preparedStatement.setString( 7, authentication.getLastName() );
-        preparedStatement.setString( 8, authentication.getMobilePhone() );
-        preparedStatement.setString( 9, authentication.getOfficePhone() );
-        preparedStatement.setString( 10, authentication.getOfficePhoneExt() );
-        preparedStatement.setString( 11, authentication.getHomePhone() );
-        preparedStatement.setInt( 12, authentication.getFailedLoginAttempts() );
-        preparedStatement.setString( 13, authentication.getVerificationCodeMethod() );
-        preparedStatement.setInt( 14, authentication.getAuthenticationProfileId() );
+        preparedStatement.setString( 8, authentication.getEmail() );
+        preparedStatement.setString( 9, authentication.getMobilePhone() );
+        preparedStatement.setString( 10, authentication.getOfficePhone() );
+        preparedStatement.setString( 11, authentication.getOfficePhoneExt() );
+        preparedStatement.setString( 12, authentication.getHomePhone() );
+        preparedStatement.setInt( 13, authentication.getFailedLoginAttempts() );
+        preparedStatement.setString( 14, authentication.getVerificationCodeMethod() );
+        preparedStatement.setInt( 15, authentication.getAuthenticationProfileId() );
         preparedStatement.executeUpdate();
         
         preparedStatement.close();
@@ -1222,16 +1221,6 @@ public class SecurityUtilities
         preparedStatement.close();
 	}
 
-	public static void deleteVerificationCode( int verificationCodeId, Connection connection ) throws SQLException
-	{
-		String sql = "delete from APPLICATION_SECURITY.VERIFICATION_CODE "
-				   + "where verification_code_id = ?";
-		PreparedStatement preparedStatement = connection.prepareStatement( sql );
-        preparedStatement.setInt( 1, verificationCodeId );
-        preparedStatement.executeUpdate();
-        preparedStatement.close();
-	}
-
 	public static ArrayList<OrganizationBean> getAllOrganizations( Connection connection ) throws SQLException
 	{
 		ArrayList<OrganizationBean> allOrganizations = new ArrayList<OrganizationBean>();
@@ -1282,6 +1271,7 @@ public class SecurityUtilities
 			authentication.setSalt( resultSet.getString("salt") );
 			authentication.setFirstName( resultSet.getString("first_name") );
 			authentication.setLastName( resultSet.getString("last_name") );
+			authentication.setEmail( resultSet.getString("email") );
 			authentication.setMobilePhone( resultSet.getString("mobile_phone") );
 			authentication.setOfficePhone( resultSet.getString("office_phone") );
 			authentication.setOfficePhoneExt( resultSet.getString("office_phone_ext") );
@@ -1469,6 +1459,7 @@ public class SecurityUtilities
 				   + "salt,"
 				   + "first_name,"
 				   + "last_name,"
+				   + "email,"
 				   + "mobile_phone,"
 				   + "office_phone,"
 				   + "office_phone_ext,"
@@ -1476,7 +1467,7 @@ public class SecurityUtilities
 				   + "failed_login_attempts,"
 				   + "verification_code_method"
 				   + ") "
-				   + "values( ?,?,?,?,?,?,?,?,?,?,?,? )";
+				   + "values( ?,?,?,?,?,?,?,?,?,?,?,?,? )";
 		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
 		System.out.println( "OrganizationId is " + user.getActiveAuthenticationProfile().getOrganizationId() );
@@ -1486,12 +1477,13 @@ public class SecurityUtilities
         preparedStatement.setString( 4, user.getActiveAuthenticationProfile().getSalt() );
         preparedStatement.setString( 5, user.getActiveAuthenticationProfile().getFirstName() );
         preparedStatement.setString( 6, user.getActiveAuthenticationProfile().getLastName() );
-        preparedStatement.setString( 7, user.getActiveAuthenticationProfile().getMobilePhone() );
-        preparedStatement.setString( 8, user.getActiveAuthenticationProfile().getOfficePhone() );
-        preparedStatement.setString( 9, user.getActiveAuthenticationProfile().getOfficePhoneExt() );
-        preparedStatement.setString( 10, user.getActiveAuthenticationProfile().getHomePhone() );
-        preparedStatement.setInt( 11, user.getActiveAuthenticationProfile().getFailedLoginAttempts() );
-        preparedStatement.setString( 12, user.getActiveAuthenticationProfile().getVerificationCodeMethod() );
+        preparedStatement.setString( 7, user.getActiveAuthenticationProfile().getEmail() );
+        preparedStatement.setString( 8, user.getActiveAuthenticationProfile().getMobilePhone() );
+        preparedStatement.setString( 9, user.getActiveAuthenticationProfile().getOfficePhone() );
+        preparedStatement.setString( 10, user.getActiveAuthenticationProfile().getOfficePhoneExt() );
+        preparedStatement.setString( 11, user.getActiveAuthenticationProfile().getHomePhone() );
+        preparedStatement.setInt( 12, user.getActiveAuthenticationProfile().getFailedLoginAttempts() );
+        preparedStatement.setString( 13, user.getActiveAuthenticationProfile().getVerificationCodeMethod() );
         preparedStatement.executeUpdate();
         
         ResultSet rs = preparedStatement.getGeneratedKeys();
@@ -1595,37 +1587,6 @@ public class SecurityUtilities
         preparedStatement.close();
 	}
 
-	public static void addNewVerificationCode( UserBean user, Connection connection ) throws SQLException
-	{
-		String sql = "insert into APPLICATION_SECURITY.VERIFICATION_CODE "
-				   + "("
-				   + "authentication_profile_id, "
-				   + "application_id, "
-				   + "verification_cd, "
-				   + "created_ts "
-				   + ") "
-				   + "values( ?,?,?,? )";
-
-		
-		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-        preparedStatement.setInt( 1, user.getActiveVerificationCode().getAuthenticationProfileId() );
-        preparedStatement.setInt( 2, user.getActiveVerificationCode().getApplicationId() );
-        preparedStatement.setString( 3, user.getActiveVerificationCode().getVerificationCode() );
-        String currentTimestamp = SecurityUtilities.getCurrentTimestamp();
-        user.getActiveVerificationCode().setCreatedTimestamp( currentTimestamp );
-        preparedStatement.setString( 4, user.getActiveVerificationCode().getCreatedTimestamp() );
-        preparedStatement.executeUpdate();
-        
-        ResultSet rs = preparedStatement.getGeneratedKeys();
-        if ( rs.next() )
-        {
-	        int newPrimaryKey = rs.getInt( 1 );
-	        user.getActiveVerificationCode().setVerificationCodeId( newPrimaryKey );
-        }
-        rs.close();
-        preparedStatement.close();
-	}
-
 	public static void addNewRoleAssignment( UserBean user, Connection connection ) throws SQLException
 	{
 		String sql = "insert into APPLICATION_SECURITY.APPLICATION_USER_DEPARTMENT_ROLE "
@@ -1710,7 +1671,6 @@ public class SecurityUtilities
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
             
             // 5. Get the response code
-            System.out.println( "SecurityUtilities.gateSucureLogin" );
             int responseCode = connection.getResponseCode();
             System.out.println("Response Code: " + responseCode);
 
@@ -1743,15 +1703,20 @@ public class SecurityUtilities
         }
 		return returnList;
 	}
+
 	
-	public static String sendText( UserBean user )
+	public static String getNewVerificationCode( int authenticationProfileId, 
+			                                     String verificationCodeMethod,
+			                                     String mobilePhone,
+			                                     String email )
 	{
-		String response = null;
+		// Return JSON representation of the ticker profile.
+		String returnList = null;
         try 
         {
             // 1. Define the URL of the REST endpoint
-        	String endpointUrl = "http://localhost/securityservices/rest/security/text";
-        	System.out.println( "SecurityUtilities: Security utilities endpoint that calls third party rest service for text: " + endpointUrl );
+        	String endpointUrl = "http://localhost/securityservices/rest/security/requestNewCode";
+        	System.out.println( "SecurityUtilities: endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
 
@@ -1759,20 +1724,27 @@ public class SecurityUtilities
             HttpURLConnection connection = ( HttpURLConnection ) url.openConnection();
 
             // 3. Set the request method (e.g., GET, POST, PUT, DELETE)
-            connection.setRequestMethod( "POST" );
+            connection.setRequestMethod( "GET" );
 
             // 4. Set request headers (optional, but often necessary for content type, authorization, etc.)
             connection.setRequestProperty("Accept", "application/json");
 
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put( "phoneNumber", user.getLoginAuthenticationProfile().getMobilePhone() );
-            jsonObject.put( "textMessage", "Enter the 6 digit code sent to you on the code entry page provided."  );
-            jsonObject.put( "endpointUrl", "https://sendtext"  );
+            if ( verificationCodeMethod == null )
+            	verificationCodeMethod = "";
+            if ( mobilePhone == null )
+            	mobilePhone = "";
+            if ( email == null )
+            	email = "";
             
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put( "authenticationProfileId", authenticationProfileId );
+            jsonObject.put( "verificationCodeMethod", verificationCodeMethod );
+            jsonObject.put( "mobilePhone", mobilePhone );
+            jsonObject.put( "email", email );
+
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
             
             // 5. Get the response code
-            System.out.println( "SecurityUtilities.sendText" );
             int responseCode = connection.getResponseCode();
             System.out.println("Response Code: " + responseCode);
 
@@ -1787,8 +1759,8 @@ public class SecurityUtilities
                     content.append( inputLine );
                 }
                 in.close();
-                response = content.toString();
-                System.out.println( "Response Body: " + content.toString() );
+                returnList = content.toString();
+//                System.out.println( "Response Body: " + content.toString() );
             } 
             else 
             {
@@ -1803,7 +1775,7 @@ public class SecurityUtilities
         {
             e.printStackTrace();
         }
-		return response;
+		return returnList;
 	}
 
 	public static String getRoles( String userId, String applicationCode )
@@ -1866,6 +1838,89 @@ public class SecurityUtilities
         }
 		return returnList;
 	}
+
+	public static String validateCode( int authenticationProfileId, String verificationCode )
+	{
+		// Return JSON representation of the ticker profile.
+		String validationResult = null;
+        try 
+        {
+            // 1. Define the URL of the REST endpoint
+        	String endpointUrl = "http://localhost/securityservices/rest/security/validate";
+        	System.out.println( "endpoint: " + endpointUrl );
+            @SuppressWarnings("deprecation")
+			URL url = new URL( endpointUrl );
+
+            // 2. Open a connection
+            HttpURLConnection connection = ( HttpURLConnection ) url.openConnection();
+
+            // 3. Set the request method (e.g., GET, POST, PUT, DELETE)
+            connection.setRequestMethod( "GET" );
+
+            // 4. Set request headers (optional, but often necessary for content type, authorization, etc.)
+            connection.setRequestProperty("Accept", "application/json");
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put( "authenticationProfileId", authenticationProfileId );
+            jsonObject.put( "verificationCode", verificationCode );
+            
+            connection.setRequestProperty( "input", jsonObject.toJSONString() );
+            
+            // 5. Get the response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // 6. Read the response
+            if ( responseCode == HttpURLConnection.HTTP_OK ) 
+            {
+                BufferedReader in = new BufferedReader( new InputStreamReader( connection.getInputStream() ) );
+                String inputLine;
+                StringBuilder content = new StringBuilder();
+                while ( ( inputLine = in.readLine() ) != null ) 
+                {
+                    content.append( inputLine );
+                }
+                in.close();
+                validationResult = content.toString();
+//                System.out.println( "Response Body: " + content.toString() );
+            } 
+            else 
+            {
+                System.out.println( "Error in GET request: " + responseCode );
+            }
+
+            // 7. Disconnect the connection
+            connection.disconnect();
+
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+		return validationResult;
+	}
+	
+	public static void loadUserRoles( UserBean user )
+	{
+		String userRolesJson = SecurityUtilities.getRoles( user.getUserName(), Constants.APPLICATION_CODE );
+		SecurityUtilities.loadAuthenticationProfileBeanWithRoles( user.getLoginAuthenticationProfile(), userRolesJson );
+		
+		// Code specific to application implementing the service.
+		boolean userHasRoleSecurity = false;
+		for ( Map.Entry<String, ArrayList<String>> entry : user.getLoginAuthenticationProfile().getRolesForDepartment().entrySet() ) 
+		{
+			String departmentName = entry.getKey();
+            System.out.println("Department: " + departmentName );
+            for ( String roleName : entry.getValue() )
+            {
+        		if ( "SECURITY_MASTER".equals( roleName ) || ( "SECURITY_ORGANIZATION".equals( roleName ) ) )
+        			userHasRoleSecurity = true;
+            }
+        }
+		if ( ! userHasRoleSecurity )
+			user.getErrors().add( "You do not have the role security to log in to the Watchtower security platform." );
+
+	}
 	
 	public static AuthenticationProfileBean loadAuthenticationProfileBean( String authenticationProfileJson )
 	{
@@ -1889,8 +1944,8 @@ public class SecurityUtilities
 				profile.setUserId( ( String ) jsonObject.get( "userId" ) );
 				profile.setFirstName( ( String ) jsonObject.get( "firstName" ) );
 				profile.setLastName( ( String ) jsonObject.get( "lastName" ) );
+				profile.setEmail( ( String ) jsonObject.get( "email" ) );
 				profile.setMobilePhone( ( String ) jsonObject.get( "mobilePhone" ) );
-				System.out.println( "MOBILE: " + profile.getMobilePhone() );
 				profile.setOfficePhone( ( String ) jsonObject.get( "officePhone" ) );
 				profile.setOfficePhoneExt( ( String ) jsonObject.get( "officePhoneExt" ) );
 				profile.setHomePhone( ( String ) jsonObject.get( "homePhone" ) );
@@ -1935,34 +1990,6 @@ public class SecurityUtilities
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	public static String generateAuthenticationCode()
-	{
-		SecureRandom random = new SecureRandom();
-        // Generate a number between 0 and 999999
-        int number = random.nextInt( 1000000 ); 
-        
-        // Format to ensure 6 digits with leading zeros if necessary
-        String code = String.format("%06d", number);
-        
-        System.out.println("Your 6-digit code: " + code);
-        return code;
-	}
-	
-	public static void sendCodeEmail( UserBean user )
-	{
-		System.out.println( "EMAIL: authentication code is " + user.getActiveVerificationCode().getVerificationCode() );
-	}
-
-	public static void sendCodeText( UserBean user )
-	{
-		System.out.println( "TEXT: authentication code is " + user.getActiveVerificationCode().getVerificationCode() );
-		System.out.println( "TEXT: send text to " + user.getActiveAuthenticationProfile().getMobilePhone() );
-		if ( SecurityUtilities.isEmpty( user.getLoginAuthenticationProfile().getMobilePhone() ) )
-			user.getErrors().add( "FATAL ERROR: No mobile phone on the profile." );
-		else
-			SecurityUtilities.sendText( user );
 	}
 	
 	public static String getCurrentTimestamp()

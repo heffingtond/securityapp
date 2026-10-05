@@ -4,11 +4,15 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import beans.ApplicationBean;
+import beans.AuthenticationProfileBean;
 import beans.OrganizationBean;
 import beans.RoleBean;
 import beans.UserBean;
-import beans.VerificationCodeBean;
 import core.Constants;
 import core.SecurityUtilities;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,37 +21,6 @@ import jakarta.servlet.http.HttpSession;
 
 public class LoginAction extends Action
 {
-	private void twoFactorAuthentication( UserBean user, String twoFactorAuthMethod, Connection connection ) throws Exception
-	{
-		// Generate a 6 digit random code.
-		String code = SecurityUtilities.generateAuthenticationCode();
-		// Send authentication code to user via chosen method (email or text)
-		// add the code to the verification code table.
-		user.getActiveVerificationCode().setVerificationCode( code );
-		
-		// First set the authentication profile ID
-		user.getActiveVerificationCode().setAuthenticationProfileId( user.getLoginAuthenticationProfile().getAuthenticationProfileId() );
-		
-		// Then, get the application ID of the app being logged into.
-		ApplicationBean myApp = SecurityUtilities.getApplication( Constants.APPLICATION_CODE, connection );
-		user.getActiveVerificationCode().setApplicationId( myApp.getApplicationId() );
-
-		if ( "TEXT".equals( twoFactorAuthMethod ) )
-			SecurityUtilities.sendCodeText( user );
-		else
-		if ( "EMAIL".equals( twoFactorAuthMethod ) )
-			SecurityUtilities.sendCodeEmail( user );
-		
-		// Natural PK: authentication_profile_id + application id.  Duplicates are not allowed.  See if we need to remove
-		// an existing code for this user/application.
-		VerificationCodeBean existingCode = SecurityUtilities.getVerificationCode( user.getActiveVerificationCode().getAuthenticationProfileId(),
-																				   user.getActiveVerificationCode().getApplicationId(),
-																				   connection );
-		if ( existingCode != null )
-			SecurityUtilities.deleteVerificationCode( existingCode.getVerificationCodeId(), connection );
-
-		SecurityUtilities.addNewVerificationCode( user, connection );
-	}
 	
 	public void execute( HttpServletRequest request,
             			 HttpServletResponse response )
@@ -86,7 +59,16 @@ public class LoginAction extends Action
 						String loginResultJson = SecurityUtilities.getSecureLogin( username, password );
 						user.setLoginAuthenticationProfile( SecurityUtilities.loadAuthenticationProfileBean( loginResultJson ) );
 						
-						if ( ! "AUTHENTICATION SUCCESSFUL".equals( user.getLoginAuthenticationProfile().getClientResult() ) )
+						
+						if ( "WAIT FOR 2 FACTOR AUTHENTICATION".equals( user.getLoginAuthenticationProfile().getClientResult() ) )
+						{
+							System.out.println( "Wait for 2FA" );
+							destinationPage = "/JSP/otpVerification.jsp";
+
+						}
+						else
+						if ( "INCORRECT PASSWORD".equals( user.getLoginAuthenticationProfile().getClientResult() )
+						  || "USER NOT FOUND".equals( user.getLoginAuthenticationProfile().getClientResult() )	)
 						{
 							user.getErrors().add( "Bad username or password" );
 							System.out.println( "Login error: " + user.getLoginAuthenticationProfile().getClientResult() );
@@ -94,34 +76,7 @@ public class LoginAction extends Action
 						else
 						{
 							// Get user roles here.
-							String userRolesJson = SecurityUtilities.getRoles( username, Constants.APPLICATION_CODE );
-							SecurityUtilities.loadAuthenticationProfileBeanWithRoles( user.getLoginAuthenticationProfile(), userRolesJson );
-							boolean userHasRoleSecurity = false;
-							for ( Map.Entry<String, ArrayList<String>> entry : user.getLoginAuthenticationProfile().getRolesForDepartment().entrySet() ) 
-							{
-								String departmentName = entry.getKey();
-					            System.out.println("Department: " + departmentName );
-					            for ( String roleName : entry.getValue() )
-					            {
-				            		if ( "SECURITY_MASTER".equals( roleName ) || ( "SECURITY_ORGANIZATION".equals( roleName ) ) )
-				            			userHasRoleSecurity = true;
-					            }
-					        }
-							if ( ! userHasRoleSecurity )
-								user.getErrors().add( "You do not have the role security to log in to the Watchtower security platform." );
-							
-							if ( user.getErrors().size() == 0 )
-							{
-								// Get the 2 factor authentication method here.
-								String twoFactorAuthMethod =  user.getLoginAuthenticationProfile().getVerificationCodeMethod();
-								if ( twoFactorAuthMethod != null )
-								{
-									twoFactorAuthentication( user, twoFactorAuthMethod, connection );
-									destinationPage = "/JSP/otpVerification.jsp";
-								}
-								else
-									continueToOrganizationPage = true;
-							}
+							SecurityUtilities.loadUserRoles( user );
 						}
 					}
 					connection.close();
@@ -150,48 +105,67 @@ public class LoginAction extends Action
 			String passcode = request.getParameter( "passcode" );
 			if ( passcode != null )
 				passcode = passcode.trim();
-			if ( user.getActiveVerificationCode().getVerificationCode().equals( passcode ) )
+			String validationResultJson = SecurityUtilities.validateCode( user.getLoginAuthenticationProfile().getAuthenticationProfileId(), passcode );
+			String validationResult = null;
+			JSONParser parser = new JSONParser();
+			try
 			{
-				Connection connection = null;
-				try
+				JSONArray jsonArray = ( JSONArray ) parser.parse( validationResultJson );
+				for ( Object obj : jsonArray ) 
 				{
-					connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
-					if ( connection != null )
-					{
-						SecurityUtilities.deleteVerificationCode( user.getActiveVerificationCode().getVerificationCodeId(), connection );
-						user.setActiveVerificationCode( new VerificationCodeBean() );
-						connection.close();
-					}
+					JSONObject jsonObject = ( JSONObject ) obj; // Each element is a JSONObject
+					validationResult = ( String ) jsonObject.get( "validationResult" );
 				}
-				catch( Exception e )
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
+			
+			// Possible Results:
+			// VALIDATION SUCCESSFUL or VALIDATION FAILED
+			if ( validationResult != null )
+			{
+				if ( "VALIDATION SUCCESSFUL".equals( validationResult ) )
+					destinationPage = "/JSP/organization.jsp";
+				else
 				{
-					e.printStackTrace();
+					user.getErrors().add( "Passcode validation failed.  Please try again." );
+					destinationPage = "/JSP/otpVerification.jsp";
 				}
-				continueToOrganizationPage = true;
 			}
 			else
 			{
-				user.getErrors().add( "Verification failed.  Please try again." );
+				user.getErrors().add( "Passcode validation failed.  Please try again.  Contact administrator if problem persists." );
 				destinationPage = "/JSP/otpVerification.jsp";
 			}
+
+			continueToOrganizationPage = true;
 		}
 		else
 		if ( "Request New Code".equalsIgnoreCase( buttonPressed ) )
 		{
 			UserBean user = ( UserBean ) request.getSession().getAttribute( "UserBean" );
-			String twoFactorAuthMethod =  user.getLoginAuthenticationProfile().getVerificationCodeMethod();
-			if ( twoFactorAuthMethod != null )
+			String verificationCodeMethod =  user.getLoginAuthenticationProfile().getVerificationCodeMethod();
+			String mobilePhone =  user.getLoginAuthenticationProfile().getMobilePhone();
+			String email =  user.getLoginAuthenticationProfile().getEmail();
+			String newCodeResult = "NEW CODE FAILED";
+			int authenticationProfileId = user.getLoginAuthenticationProfile().getAuthenticationProfileId();
+			if ( verificationCodeMethod != null )
 			{
-				Connection connection = null;
+				String newVarificationCodeResultJson = SecurityUtilities.getNewVerificationCode( authenticationProfileId, 
+						                                                                         verificationCodeMethod,
+						                                                                         mobilePhone,
+						                                                                         email );
+				
+				JSONParser parser = new JSONParser();
 				try
 				{
-					connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
-					if ( connection != null )
+					JSONArray jsonArray = ( JSONArray ) parser.parse( newVarificationCodeResultJson );
+					for ( Object obj : jsonArray ) 
 					{
-						user.setActiveVerificationCode( new VerificationCodeBean() );
-						twoFactorAuthentication( user, twoFactorAuthMethod, connection );
-						connection.close();
-						request.setAttribute( "userMessage", "New code sent." );
+						JSONObject jsonObject = ( JSONObject ) obj; // Each element is a JSONObject
+						newCodeResult = ( String ) jsonObject.get( "newCodeResult" );
 					}
 				}
 				catch( Exception e )
@@ -199,8 +173,13 @@ public class LoginAction extends Action
 					e.printStackTrace();
 				}
 			}
+			else
+				user.getErrors().add( "Verification code send method not defined on profile." );
+			if ( ! "WAIT FOR 2 FACTOR AUTHENTICATION".equals( newCodeResult ) )
+				user.getErrors().add( "New code request failed: " + newCodeResult + ".  If problem persists, contact administrator." );
+			else
+				request.setAttribute( "userMessage", "New code sent successfully." );
 			destinationPage = "/JSP/otpVerification.jsp";
-		
 		}
 		if ( continueToOrganizationPage )
 		{

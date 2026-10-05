@@ -58,6 +58,9 @@ create table AUTHENTICATION_PROFILE
 	verification_code_method		varchar(50) -- email or text mobile phone.
 ) ENGINE=InnoDB;
 
+ALTER TABLE AUTHENTICATION_PROFILE 
+ADD COLUMN email VARCHAR(128) AFTER last_name;
+
 CREATE INDEX user_id_index ON AUTHENTICATION_PROFILE ( user_id );
 
 select * from AUTHENTICATION_PROFILE;
@@ -166,15 +169,12 @@ create table VERIFICATION_CODE
 	verification_code_id 		integer primary key not null auto_increment,
 	authentication_profile_id				integer,
 	foreign key ( authentication_profile_id ) references  AUTHENTICATION_PROFILE( authentication_profile_id ),
-	application_id				integer,
-	foreign key ( application_id ) references  APPLICATION( application_id ),
 	verification_cd				varchar(6) not null,
 	created_ts						varchar(1000)
 ) ENGINE=InnoDB;
 
+
 select * from application;
-
-
 
 SELECT  d.department_code, r.role_name 
 FROM ROLE r, APPLICATION a, APPLICATION_USER_DEPARTMENT_ROLE audr, DEPARTMENT d, AUTHENTICATION_PROFILE ap, ORGANIZATION o

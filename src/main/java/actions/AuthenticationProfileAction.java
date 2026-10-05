@@ -92,6 +92,7 @@ public class AuthenticationProfileAction extends Action
 				user.getActiveAuthenticationProfile().setTextPassword( request.getParameter( "textPassword" ) );
 				user.getActiveAuthenticationProfile().setFirstName( request.getParameter( "firstName" ) );
 				user.getActiveAuthenticationProfile().setLastName( request.getParameter( "lastName" ) );
+				user.getActiveAuthenticationProfile().setEmail( request.getParameter( "email" ) );
 				user.getActiveAuthenticationProfile().setMobilePhone( request.getParameter( "mobilePhone" ) );
 				user.getActiveAuthenticationProfile().setOfficePhone( request.getParameter( "officePhone" ) );
 				user.getActiveAuthenticationProfile().setOfficePhoneExt( request.getParameter( "officePhoneExt" ) );
@@ -199,6 +200,7 @@ public class AuthenticationProfileAction extends Action
 			user.getActiveAuthenticationProfile().setTextPassword( request.getParameter( "textPassword" ) );
 			user.getActiveAuthenticationProfile().setFirstName( request.getParameter( "firstName" ) );
 			user.getActiveAuthenticationProfile().setLastName( request.getParameter( "lastName" ) );
+			user.getActiveAuthenticationProfile().setEmail( request.getParameter( "email" ) );
 			user.getActiveAuthenticationProfile().setMobilePhone( request.getParameter( "mobilePhone" ) );
 			user.getActiveAuthenticationProfile().setOfficePhone( request.getParameter( "officePhone" ) );
 			user.getActiveAuthenticationProfile().setOfficePhoneExt( request.getParameter( "officePhoneExt" ) );
