@@ -186,8 +186,8 @@ public class SecurityUtilities
 		if ( user.getActiveAuthenticationProfile().getUserId().length() < 8 || user.getActiveAuthenticationProfile().getUserId().length() > 50 )
 			user.getErrors().add( "User ID must be 8 to 50 characters in length." );
 		
-		if ( SecurityUtilities.isEmpty( user.getActiveAuthenticationProfile().getVerificationCodeMethod() ) || "SELECT".equals( user.getActiveAuthenticationProfile().getVerificationCodeMethod() ) )
-			user.getErrors().add( "Please select a method for verification code delivery." );
+//		if ( SecurityUtilities.isEmpty( user.getActiveAuthenticationProfile().getVerificationCodeMethod() ) || "SELECT".equals( user.getActiveAuthenticationProfile().getVerificationCodeMethod() ) )
+//			user.getErrors().add( "Please select a method for verification code delivery." );
 		
 		if ( user.getErrors().size() == 0 )
 		{
