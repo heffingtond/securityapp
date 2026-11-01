@@ -14,7 +14,7 @@
 @import "/securityapp/css/pageFormat.css";
 @import "/securityapp/css/header.css";
 </style>
-
+<link rel="icon" type="image/x-icon" href="/securityapp/images/Watchtower.png">
 <title>Security Login</title>
 </head>
 <body>
@@ -35,9 +35,9 @@
 			    </div>   	
 		        <form action="/securityapp/SecurityServlet" method="post">
 		            <label for="username">Username:</label>
-		            <input type="text" id="username" name="username" required><br><br>
+		            <input type="text" id="username" name="username"><br><br>
 		            <label for="password">Password:</label>
-		            <input type="password" id="password" name="password" required><br><br>
+		            <input type="password" id="password" name="password"><br><br>
 		            <input type="submit" value="Login" name="LoginAction">
 		        </form>
 		    </div>

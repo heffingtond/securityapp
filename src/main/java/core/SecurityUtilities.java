@@ -22,6 +22,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.json.simple.JSONArray;
@@ -1650,7 +1651,9 @@ public class SecurityUtilities
         try 
         {
             // 1. Define the URL of the REST endpoint
-        	String endpointUrl = "http://localhost/securityservices/rest/security/authentication";
+        	Context ctx = new InitialContext();
+        	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
+        	String endpointUrl = domainName + "/securityservices/rest/security/authentication";
         	System.out.println( "SecurityUtilities: endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
@@ -1701,6 +1704,10 @@ public class SecurityUtilities
         {
             e.printStackTrace();
         }
+        catch (NamingException e) 
+        {
+            e.printStackTrace();
+        }
 		return returnList;
 	}
 
@@ -1715,7 +1722,9 @@ public class SecurityUtilities
         try 
         {
             // 1. Define the URL of the REST endpoint
-        	String endpointUrl = "http://localhost/securityservices/rest/security/requestNewCode";
+        	Context ctx = new InitialContext();
+        	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
+        	String endpointUrl = domainName + "/securityservices/rest/security/requestNewCode";
         	System.out.println( "SecurityUtilities: endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
@@ -1775,6 +1784,10 @@ public class SecurityUtilities
         {
             e.printStackTrace();
         }
+        catch (NamingException e) 
+        {
+            e.printStackTrace();
+        }
 		return returnList;
 	}
 
@@ -1785,7 +1798,9 @@ public class SecurityUtilities
         try 
         {
             // 1. Define the URL of the REST endpoint
-        	String endpointUrl = "http://localhost/securityservices/rest/security/roles";
+        	Context ctx = new InitialContext();
+        	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
+        	String endpointUrl = domainName + "/securityservices/rest/security/roles";
         	System.out.println( "endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
@@ -1836,6 +1851,10 @@ public class SecurityUtilities
         {
             e.printStackTrace();
         }
+        catch (NamingException e) 
+        {
+            e.printStackTrace();
+        }
 		return returnList;
 	}
 
@@ -1846,7 +1865,9 @@ public class SecurityUtilities
         try 
         {
             // 1. Define the URL of the REST endpoint
-        	String endpointUrl = "http://localhost/securityservices/rest/security/validate";
+        	Context ctx = new InitialContext();
+        	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
+        	String endpointUrl = domainName + "/securityservices/rest/security/validate";
         	System.out.println( "endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
@@ -1894,6 +1915,10 @@ public class SecurityUtilities
 
         } 
         catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+        catch (NamingException e) 
         {
             e.printStackTrace();
         }

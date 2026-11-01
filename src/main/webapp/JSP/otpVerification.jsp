@@ -14,7 +14,7 @@
 @import "/securityapp/css/pageFormat.css";
 @import "/securityapp/css/header.css";
 </style>
-
+<link rel="icon" type="image/x-icon" href="/securityapp/images/Watchtower.png">
 <title>One Time Pass Code Verification</title>
 </head>
 <body>

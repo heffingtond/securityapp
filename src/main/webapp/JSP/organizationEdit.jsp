@@ -14,6 +14,7 @@
 </style>
 
 <meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="/securityapp/images/Watchtower.png">
 <title>Edit an organization</title>
 </head>
 <body>

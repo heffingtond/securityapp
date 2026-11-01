@@ -2,14 +2,11 @@ package actions;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import beans.ApplicationBean;
-import beans.AuthenticationProfileBean;
 import beans.OrganizationBean;
 import beans.RoleBean;
 import beans.UserBean;
@@ -27,7 +24,7 @@ public class LoginAction extends Action
 	{
 		String destinationPage = "/JSP/login.jsp";
 		String buttonPressed =  request.getParameter( "LoginAction" );
-		boolean continueToOrganizationPage = false;
+		boolean continueToOrganization = false;
 		if ( "Login".equalsIgnoreCase( buttonPressed ) )
 		{
 			HttpSession session = request.getSession( false );
@@ -41,60 +38,38 @@ public class LoginAction extends Action
 			String username = request.getParameter( "username" );
 			String password = request.getParameter( "password" );
 			UserBean user = new UserBean();
+			user.setUserName( username );
 			request.getSession().setAttribute( "UserBean", user );
-			Connection connection = null;
-			try
-			{
-				connection = SecurityUtilities.getJndiConnection( "SECURITY_MYSQL_DB" );
-				if ( connection != null )
-				{
-					user.getErrors().addAll( SecurityUtilities.validateLogin(  username, password ) );
+			user.getErrors().addAll( SecurityUtilities.validateLogin(  username, password ) );
 	
-					if ( user.getErrors().size() == 0 )
-					{
-						// Call a REST service to authenticate.
-						// Authenticate with user name and password, 
-						// return the profile is successful.  Otherwise, 
-						// return [AUTHENTICATION_FAILED].
-						String loginResultJson = SecurityUtilities.getSecureLogin( username, password );
-						user.setLoginAuthenticationProfile( SecurityUtilities.loadAuthenticationProfileBean( loginResultJson ) );
-						
-						
-						if ( "WAIT FOR 2 FACTOR AUTHENTICATION".equals( user.getLoginAuthenticationProfile().getClientResult() ) )
-						{
-							System.out.println( "Wait for 2FA" );
-							destinationPage = "/JSP/otpVerification.jsp";
-
-						}
-						else
-						if ( "INCORRECT PASSWORD".equals( user.getLoginAuthenticationProfile().getClientResult() )
-						  || "USER NOT FOUND".equals( user.getLoginAuthenticationProfile().getClientResult() )	)
-						{
-							user.getErrors().add( "Bad username or password" );
-							System.out.println( "Login error: " + user.getLoginAuthenticationProfile().getClientResult() );
-						}
-						else
-						{
-							// Get user roles here.
-							SecurityUtilities.loadUserRoles( user );
-						}
-					}
-					connection.close();
-				}
-			}
-			catch( Exception e )
+			if ( user.getErrors().size() == 0 )
 			{
-				e.printStackTrace();
-			}
-			finally
-			{
-				if ( connection != null )
-				try
+				// Call a REST service to authenticate.
+				// Authenticate with user name and password, 
+				// return the profile if successful.  Otherwise, 
+				// return [AUTHENTICATION_FAILED].
+				String loginResultJson = SecurityUtilities.getSecureLogin( username, password );
+				user.setLoginAuthenticationProfile( SecurityUtilities.loadAuthenticationProfileBean( loginResultJson ) );
+				
+				if ( "WAIT FOR 2 FACTOR AUTHENTICATION".equals( user.getLoginAuthenticationProfile().getClientResult() ) )
 				{
-					connection.close();
+					System.out.println( "Wait for 2FA" );
+					destinationPage = "/JSP/otpVerification.jsp";
 				}
-				catch ( Exception e )
+				else
+				if ( "INCORRECT PASSWORD".equals( user.getLoginAuthenticationProfile().getClientResult() )
+				  || "USER NOT FOUND".equals( user.getLoginAuthenticationProfile().getClientResult() )	)
 				{
+					user.getErrors().add( "Bad username or password" );
+					System.out.println( "Login error: " + user.getLoginAuthenticationProfile().getClientResult() );
+					destinationPage = "/JSP/login.jsp";
+				}
+				else
+				{
+					// Get user roles here.
+					SecurityUtilities.loadUserRoles( user );
+					continueToOrganization = true;
+					destinationPage = "/JSP/organization.jsp";
 				}
 			}
 		}
@@ -127,7 +102,11 @@ public class LoginAction extends Action
 			if ( validationResult != null )
 			{
 				if ( "VALIDATION SUCCESSFUL".equals( validationResult ) )
+				{
+					SecurityUtilities.loadUserRoles( user );
+					continueToOrganization = true;
 					destinationPage = "/JSP/organization.jsp";
+				}
 				else
 				{
 					user.getErrors().add( "Passcode validation failed.  Please try again." );
@@ -139,8 +118,6 @@ public class LoginAction extends Action
 				user.getErrors().add( "Passcode validation failed.  Please try again.  Contact administrator if problem persists." );
 				destinationPage = "/JSP/otpVerification.jsp";
 			}
-
-			continueToOrganizationPage = true;
 		}
 		else
 		if ( "Request New Code".equalsIgnoreCase( buttonPressed ) )
@@ -181,10 +158,12 @@ public class LoginAction extends Action
 				request.setAttribute( "userMessage", "New code sent successfully." );
 			destinationPage = "/JSP/otpVerification.jsp";
 		}
-		if ( continueToOrganizationPage )
+		if ( continueToOrganization )
 		{
 			UserBean user = ( UserBean ) request.getSession().getAttribute( "UserBean" );
-			if ( user.getErrors().size() == 0 )
+			if ( user.getErrors().size() > 0 )
+				destinationPage = "/JSP/login.jsp";
+			else
 			{
 				request.getSession().setAttribute( "STATE_LIST", Constants.STATE_LIST );
 				request.getSession().setAttribute( "VERIFICATION_METHODS", Constants.VERIFICATION_METHODS );

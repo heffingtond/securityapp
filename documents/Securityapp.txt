@@ -1,5 +1,7 @@
 CREATE database APPLICATION_SECURITY;
 
+-- See separate doc to create the application user here.
+
 use APPLICATION_SECURITY;
 
 drop table ORGANIZATION;

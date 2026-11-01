@@ -16,6 +16,7 @@
 </style>
 
 <meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="/securityapp/images/Watchtower.png">
 <title>Maintain Applications</title>
 </head>
 <body>
