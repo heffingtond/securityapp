@@ -43,8 +43,6 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.AddressException;
 
-
-
 public class SecurityUtilities
 {
 	public static boolean isTimeout( HttpServletRequest request,
@@ -580,7 +578,6 @@ public class SecurityUtilities
 	
 	public static Connection getJndiConnection( String datasourceName ) throws Exception
 	{
-		System.out.println( "datasourceName is " + datasourceName );
 		Context initContext = new InitialContext();
 	    DataSource ds = ( DataSource ) initContext.lookup( "java:jboss/datasources/" + datasourceName);
 	    Connection connection = ds.getConnection();
@@ -770,7 +767,6 @@ public class SecurityUtilities
 			"select * from APPLICATION_SECURITY.DEPARTMENT "
 		  + "where department_code = ? "
 		  + "and organization_id = ?";
-			System.out.println( "sql is " + sql );
 			PreparedStatement preparedStatement = null;
 	        ResultSet resultSet = null;
 	        preparedStatement = connection.prepareStatement( sql );
@@ -841,7 +837,6 @@ public class SecurityUtilities
 			String sql = 
 			"select * from APPLICATION_SECURITY.AUTHENTICATION_PROFILE "
 		  + "where authentication_profile_id = ? ";
-			System.out.println( "sql is " + sql );
 			PreparedStatement preparedStatement = null;
 	        ResultSet resultSet = null;
 	        preparedStatement = connection.prepareStatement( sql );
@@ -885,7 +880,6 @@ public class SecurityUtilities
 			String sql = 
 			"select * from APPLICATION_SECURITY.DEPARTMENT "
 		  + "where department_id = ? ";
-			System.out.println( "sql is " + sql );
 			PreparedStatement preparedStatement = null;
 	        ResultSet resultSet = null;
 	        preparedStatement = connection.prepareStatement( sql );
@@ -1015,7 +1009,6 @@ public class SecurityUtilities
 	{
 		String sql = "select * from APPLICATION_SECURITY.ORGANIZATION "
 				   + "where organization_id = ?";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         preparedStatement = connection.prepareStatement( sql );
@@ -1053,7 +1046,6 @@ public class SecurityUtilities
 				   + "primary_url,"
 				   + "organization_description) "
 				   + "values( ?,?,?,?,?,?,?,? )";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
         preparedStatement.setString( 1, user.getActiveOrganization().getOrganizationName() );
         preparedStatement.setString( 2, user.getActiveOrganization().getOrganizationAddress() );
@@ -1069,7 +1061,6 @@ public class SecurityUtilities
         if ( rs.next() )
         {
 	        int newPrimaryKey = rs.getInt( 1 );
-	        System.out.println( "New primary key: " + newPrimaryKey );
 	        user.getActiveOrganization().setOrganizationId( newPrimaryKey );
         }
         rs.close();
@@ -1088,9 +1079,7 @@ public class SecurityUtilities
 				   + " primary_url=?,"
 				   + " organization_description=? "
 				   + " where organization_id = ?";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql );
-		System.out.println( "saving name " + organization.getOrganizationName() );
         preparedStatement.setString( 1, organization.getOrganizationName() );
         preparedStatement.setString( 2, organization.getOrganizationAddress() );
         preparedStatement.setString( 3, organization.getOrganizationCity() );
@@ -1100,7 +1089,6 @@ public class SecurityUtilities
         preparedStatement.setString( 7, organization.getPrimaryUrl() );
         preparedStatement.setString( 8, organization.getOrganizationDescription() );
         preparedStatement.setInt( 9, organization.getOrganizationId() );
-		System.out.println( "saving organizationId " + organization.getOrganizationId() );
         preparedStatement.executeUpdate();
         
         preparedStatement.close();
@@ -1226,7 +1214,6 @@ public class SecurityUtilities
 	{
 		ArrayList<OrganizationBean> allOrganizations = new ArrayList<OrganizationBean>();
 		String sql = "select * from APPLICATION_SECURITY.ORGANIZATION ";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = null;
 		ResultSet resultSet = null;
 		preparedStatement = connection.prepareStatement( sql );
@@ -1469,9 +1456,7 @@ public class SecurityUtilities
 				   + "verification_code_method"
 				   + ") "
 				   + "values( ?,?,?,?,?,?,?,?,?,?,?,?,? )";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-		System.out.println( "OrganizationId is " + user.getActiveAuthenticationProfile().getOrganizationId() );
         preparedStatement.setInt( 1, user.getActiveAuthenticationProfile().getOrganizationId() );
         preparedStatement.setString( 2, user.getActiveAuthenticationProfile().getUserId() );
         preparedStatement.setString( 3, user.getActiveAuthenticationProfile().getPassword() );
@@ -1491,7 +1476,6 @@ public class SecurityUtilities
         if ( rs.next() )
         {
 	        int newPrimaryKey = rs.getInt( 1 );
-	        System.out.println( "New primary key: " + newPrimaryKey );
 	        user.getActiveAuthenticationProfile().setAuthenticationProfileId( newPrimaryKey );
         }
         rs.close();
@@ -1508,9 +1492,7 @@ public class SecurityUtilities
 				   + "department_description"
 				   + ") "
 				   + "values( ?,?,?,? )";
-		System.out.println( "sql is " + sql );
 		PreparedStatement preparedStatement = connection.prepareStatement( sql, Statement.RETURN_GENERATED_KEYS );
-		System.out.println( "OrganizationId is " + user.getActiveDepartment().getOrganizationId() );
         preparedStatement.setInt( 1, user.getActiveDepartment().getOrganizationId() );
         preparedStatement.setString( 2, user.getActiveDepartment().getDepartmentName() );
         preparedStatement.setString( 3, user.getActiveDepartment().getDepartmentCode() );
@@ -1521,7 +1503,6 @@ public class SecurityUtilities
         if ( rs.next() )
         {
 	        int newPrimaryKey = rs.getInt( 1 );
-	        System.out.println( "New primary key: " + newPrimaryKey );
 	        user.getActiveDepartment().setDepartmentId( newPrimaryKey );
         }
         rs.close();
@@ -1654,7 +1635,6 @@ public class SecurityUtilities
         	Context ctx = new InitialContext();
         	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
         	String endpointUrl = domainName + "/securityservices/rest/security/authentication";
-        	System.out.println( "SecurityUtilities: endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
 
@@ -1675,7 +1655,6 @@ public class SecurityUtilities
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             // 6. Read the response
             if ( responseCode == HttpURLConnection.HTTP_OK ) 
@@ -1725,7 +1704,6 @@ public class SecurityUtilities
         	Context ctx = new InitialContext();
         	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
         	String endpointUrl = domainName + "/securityservices/rest/security/requestNewCode";
-        	System.out.println( "SecurityUtilities: endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
 
@@ -1755,7 +1733,6 @@ public class SecurityUtilities
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             // 6. Read the response
             if ( responseCode == HttpURLConnection.HTTP_OK ) 
@@ -1801,7 +1778,6 @@ public class SecurityUtilities
         	Context ctx = new InitialContext();
         	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
         	String endpointUrl = domainName + "/securityservices/rest/security/roles";
-        	System.out.println( "endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
 
@@ -1822,7 +1798,6 @@ public class SecurityUtilities
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             // 6. Read the response
             if ( responseCode == HttpURLConnection.HTTP_OK ) 
@@ -1868,7 +1843,6 @@ public class SecurityUtilities
         	Context ctx = new InitialContext();
         	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
         	String endpointUrl = domainName + "/securityservices/rest/security/validate";
-        	System.out.println( "endpoint: " + endpointUrl );
             @SuppressWarnings("deprecation")
 			URL url = new URL( endpointUrl );
 
@@ -1889,7 +1863,6 @@ public class SecurityUtilities
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
-            System.out.println("Response Code: " + responseCode);
 
             // 6. Read the response
             if ( responseCode == HttpURLConnection.HTTP_OK ) 
@@ -1903,7 +1876,6 @@ public class SecurityUtilities
                 }
                 in.close();
                 validationResult = content.toString();
-//                System.out.println( "Response Body: " + content.toString() );
             } 
             else 
             {
@@ -1935,7 +1907,6 @@ public class SecurityUtilities
 		for ( Map.Entry<String, ArrayList<String>> entry : user.getLoginAuthenticationProfile().getRolesForDepartment().entrySet() ) 
 		{
 			String departmentName = entry.getKey();
-            System.out.println("Department: " + departmentName );
             for ( String roleName : entry.getValue() )
             {
         		if ( "SECURITY_MASTER".equals( roleName ) || ( "SECURITY_ORGANIZATION".equals( roleName ) ) )
@@ -2022,9 +1993,6 @@ public class SecurityUtilities
 		Instant instant = Instant.now();
 		ZoneId desiredZone = ZoneId.systemDefault();
 		ZonedDateTime zonedDateTime = instant.atZone(desiredZone);
-		
-        System.out.println("ZonedDateTime in " + desiredZone + ": " + zonedDateTime);
-
 		String convertedTimestamp = zonedDateTime.toString();
 		return convertedTimestamp;
 	}

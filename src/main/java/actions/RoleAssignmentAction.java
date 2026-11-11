@@ -41,14 +41,12 @@ public class RoleAssignmentAction extends Action
 						// The Watchtower application needs to be available for all organizations, not just the Watchtower organization.
 						
 						String selectedOrganizationName = SecurityUtilities.getOrganization( user.getActiveRoleAssignment().getOrganizationId(),  user.getAllOrganizations() ).getOrganizationName();
-						System.out.println( "ORG Name selected is " +  selectedOrganizationName );
 						if ( ! "Watchtower".equalsIgnoreCase( selectedOrganizationName ) )
 						{
 							System.out.println( "Watchtower IS NOT THE ORG.  Add watchtower to the app list" );
 							ApplicationBean watchtower = SecurityUtilities.getApplication( "SECURITY_APP", connection);
 							if ( watchtower != null )
 							{
-								System.out.println( "Watchtower is not null" );
 								allApplications.add( watchtower );
 							}
 						}
@@ -87,14 +85,12 @@ public class RoleAssignmentAction extends Action
 						// The Watchtower application needs to be available for all organizations, not just the Watchtower organization.
 						
 						String selectedOrganizationName = SecurityUtilities.getOrganization( user.getActiveRoleAssignment().getOrganizationId(),  user.getAllOrganizations() ).getOrganizationName();
-						System.out.println( "ORG Name selected is " +  selectedOrganizationName );
 						if ( ! "Watchtower".equalsIgnoreCase( selectedOrganizationName ) )
 						{
 							System.out.println( "Watchtower IS NOT THE ORG.  Add watchtower to the app list" );
 							ApplicationBean watchtower = SecurityUtilities.getApplication( "SECURITY_APP", connection);
 							if ( watchtower != null )
 							{
-								System.out.println( "Watchtower is not null" );
 								allApplications.add( watchtower );
 							}
 						}
@@ -163,7 +159,6 @@ public class RoleAssignmentAction extends Action
 							for( RoleBean role : allRoles )
 								if ( "SECURITY_MASTER".equals( role.getRoleName() ) )
 								{
-									System.out.println( "Removing SECURITY_MASTER role" );
 									allRoles.remove( role );
 								}
 						}

@@ -19,11 +19,9 @@ public class OrganizationAction extends Action
 		UserBean user = ( UserBean ) request.getSession().getAttribute( "UserBean" );
 
 		String buttonPressed =  request.getParameter( "OrganizationAction" );
-		System.out.println( "NEW button pressed is " + buttonPressed );
 		if ( "addOrganization".equalsIgnoreCase( buttonPressed ) )
 		{
 			OrganizationBean organization = new OrganizationBean();
-			System.out.println( "Save the new organization here." );
 			String organizationName = request.getParameter( "organizationName" );
 			organization.setOrganizationName( organizationName );
 			String organizationAddress = request.getParameter( "organizationAddress" );
@@ -142,7 +140,6 @@ public class OrganizationAction extends Action
 		if ( "saveEdit".equals( buttonPressed ) )
 		{
 			destinationPage = "/JSP/organization.jsp";
-			System.out.println( "Save the modified organization here." );
 			String organizationName = request.getParameter( "organizationName" );
 			user.getActiveOrganization().setOrganizationName( organizationName );
 			String organizationAddress = request.getParameter( "organizationAddress" );

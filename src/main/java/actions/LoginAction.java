@@ -191,8 +191,6 @@ public class LoginAction extends Action
 				}
 				
 				// See if this user is restricted to the login organization:
-				System.out.println( "The login organization ID is " + user.getLoginAuthenticationProfile().getOrganizationId() );
-				System.out.println( "The login organization name is " + SecurityUtilities.getOrganization( user.getLoginAuthenticationProfile().getOrganizationId(), user.getAllOrganizations() ).getOrganizationName() );
 				
 				if ( "Watchtower".equalsIgnoreCase( SecurityUtilities.getOrganization( user.getLoginAuthenticationProfile().getOrganizationId(), user.getAllOrganizations() ).getOrganizationName() ) )
 				{
@@ -203,7 +201,6 @@ public class LoginAction extends Action
 				{
 					// If this is not a Watchtower user, need to lock down the organization drop down and restrict this user's access to 
 					// their organization.
-					System.out.println( "Set the restricted organization ID to " + user.getLoginAuthenticationProfile().getOrganizationId() );
 					user.setRestrictedOrganizationId( user.getLoginAuthenticationProfile().getOrganizationId() );  
 				}
 				
