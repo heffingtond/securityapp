@@ -1652,6 +1652,10 @@ public class SecurityUtilities
             jsonObject.put( "password", password );
             
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
+
+            ctx = new InitialContext();
+	   	    String restKey = ( String ) ctx.lookup("java:global/restKey");
+            connection.setRequestProperty( "authorization", restKey );
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
@@ -1730,6 +1734,9 @@ public class SecurityUtilities
             jsonObject.put( "email", email );
 
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
+	   	    ctx = new InitialContext();
+	   	    String restKey = ( String ) ctx.lookup("java:global/restKey");
+            connection.setRequestProperty( "authorization", restKey );
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
@@ -1795,6 +1802,9 @@ public class SecurityUtilities
             jsonObject.put( "applicationCode", applicationCode );
             
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
+	   	    ctx = new InitialContext();
+	   	    String restKey = ( String ) ctx.lookup("java:global/restKey");
+            connection.setRequestProperty( "authorization", restKey );
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
@@ -1860,6 +1870,9 @@ public class SecurityUtilities
             jsonObject.put( "verificationCode", verificationCode );
             
             connection.setRequestProperty( "input", jsonObject.toJSONString() );
+	   	    ctx = new InitialContext();
+	   	    String restKey = ( String ) ctx.lookup("java:global/restKey");
+            connection.setRequestProperty( "authorization", restKey );
             
             // 5. Get the response code
             int responseCode = connection.getResponseCode();
