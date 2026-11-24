@@ -2000,6 +2000,92 @@ public class SecurityUtilities
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * Call REST service to send the email.  Since the session configuration is a jndi entry, 
+	 * this call will work with any valid smtp host.
+	 * @param sessionJndi - jndi entry to support the desired smtp host.
+	 * @param from
+	 * @param to
+	 * @param subject
+	 * @param text
+	 * @return
+	 * @throws Exception
+	 */
+	public static String sendEmail( String sessionJndi,
+            					    String from,
+            					    String to,
+            					    String subject,
+            					    String text ) throws Exception
+	{
+		// Return JSON result.
+		String returnJsonResult = null;
+        try 
+        {
+            // 1. Define the URL of the REST endpoint
+        	Context ctx = new InitialContext();
+        	String domainName = ( String ) ctx.lookup("java:global/restServiceDomain");
+        	String endpointUrl = domainName + "/securityservices/rest/security/sendEmail";
+            @SuppressWarnings("deprecation")
+			URL url = new URL( endpointUrl );
+
+            // 2. Open a connection
+            HttpURLConnection connection = ( HttpURLConnection ) url.openConnection();
+
+            // 3. Set the request method (e.g., GET, POST, PUT, DELETE)
+            connection.setRequestMethod( "POST" );
+
+            // 4. Set request headers (optional, but often necessary for content type, authorization, etc.)
+            connection.setRequestProperty("Accept", "application/json");
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put( "sessionJndi", sessionJndi );
+            jsonObject.put( "from", from );
+            jsonObject.put( "to", to );
+            jsonObject.put( "subject", subject );
+            jsonObject.put( "text", text );
+            connection.setRequestProperty( "input", jsonObject.toJSONString() );
+
+	   	    ctx = new InitialContext();
+	   	    String restKey = ( String ) ctx.lookup("java:global/restKey");
+            connection.setRequestProperty( "authorization", restKey );
+            
+            // 5. Get the response code
+            int responseCode = connection.getResponseCode();
+
+            // 6. Read the response
+            if ( responseCode == HttpURLConnection.HTTP_OK ) 
+            {
+                BufferedReader in = new BufferedReader( new InputStreamReader( connection.getInputStream() ) );
+                String inputLine;
+                StringBuilder content = new StringBuilder();
+                while ( ( inputLine = in.readLine() ) != null ) 
+                {
+                    content.append( inputLine );
+                }
+                in.close();
+                returnJsonResult = content.toString();
+//	                System.out.println( "Response Body: " + content.toString() );
+            } 
+            else 
+            {
+                System.out.println( "Error in POST request: " + responseCode );
+            }
+
+            // 7. Disconnect the connection
+            connection.disconnect();
+
+        } 
+        catch (IOException e) 
+        {
+            e.printStackTrace();
+        }
+        catch (NamingException e) 
+        {
+            e.printStackTrace();
+        }
+		return returnJsonResult;
+	}
 	
 	public static String getCurrentTimestamp()
 	{
